@@ -1,0 +1,2919 @@
+openapi: 3.1.0
+info:
+  title: Lunar Landing Site Navigator API v1
+  version: 1.0.0
+  description: Agreed API v1 contract. Only GET /api/v1/health is implemented in Stage
+    0. Planned operations are explicitly marked. Every example is a synthetic development/test
+    fixture, not a measured NASA result. See docs/API_V1.md for scientific, temporal
+    and scoring rules and docs/CONTRACT_DECISIONS.md for explicit schema decisions.
+    Cross-field x-invariants require application validation; JSON Schema alone does
+    not enforce them.
+paths:
+  /api/v1/health:
+    get:
+      operationId: getHealth
+      summary: getHealth
+      x-implementation-status: implemented
+      parameters: []
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                database_unavailable:
+                  summary: Development/test fixture
+                  externalValue: ./examples/database-unavailable.json
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+              examples:
+                healthy:
+                  summary: Development/test fixture; not measured NASA results
+                  externalValue: ./examples/healthy.json
+      description: 'Unknown request fields and query parameters are rejected. All
+        responses use UTC timestamps ending in Z. Stage 0: implemented.'
+      x-reject-unknown-query-parameters: true
+  /api/v1/sites:
+    get:
+      operationId: listSites
+      summary: listSites
+      x-implementation-status: planned
+      parameters:
+      - name: category
+        in: query
+        required: false
+        schema: &id004
+          type: string
+          enum:
+          - artemis
+          - apollo
+          - clps
+          - international
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteList'
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+  /api/v1/sites/{site_id}:
+    get:
+      operationId: getSite
+      summary: getSite
+      x-implementation-status: planned
+      parameters:
+      - name: site_id
+        in: path
+        required: true
+        schema: &id001
+          type: string
+          minLength: 1
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+  /api/v1/map/layers:
+    get:
+      operationId: listLayers
+      summary: listLayers
+      x-implementation-status: planned
+      parameters: []
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LayerList'
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+  /api/v1/map/layers/{layer_id}:
+    get:
+      operationId: getLayer
+      summary: getLayer
+      x-implementation-status: planned
+      parameters:
+      - name: layer_id
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Layer'
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+  /api/v1/map/layers/{layer_id}/tiles/{matrix}/{row}/{col}:
+    get:
+      operationId: getMapTile
+      summary: getMapTile
+      x-implementation-status: planned
+      parameters:
+      - name: layer_id
+        in: path
+        required: true
+        schema: *id001
+      - name: matrix
+        in: path
+        required: true
+        schema: *id001
+      - name: row
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 0
+      - name: col
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 0
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Registered provider map image. Actual image MIME type is forwarded.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server. Only registered layer IDs are accepted. No arbitrary external
+        URL input. Layer metadata determines CRS, units, extent and WMTS matrix set.
+      x-reject-unknown-query-parameters: true
+  /api/v1/map/layers/{layer_id}/image:
+    get:
+      operationId: getMapImage
+      summary: getMapImage
+      x-implementation-status: planned
+      parameters:
+      - name: layer_id
+        in: path
+        required: true
+        schema: *id001
+      - name: bbox
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^-?(?:\d+(?:\.\d+)?),-?(?:\d+(?:\.\d+)?),-?(?:\d+(?:\.\d+)?),-?(?:\d+(?:\.\d+)?)$
+        description: min_x,min_y,max_x,max_y in the registered layer CRS, with min_x<max_x
+          and min_y<max_y.
+      - name: width
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1024
+      - name: height
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1024
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Registered provider map image. Actual image MIME type is forwarded.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server. Only registered layer IDs are accepted. No arbitrary external
+        URL input. Layer metadata determines CRS, units, extent and WMTS matrix set.
+      x-reject-unknown-query-parameters: true
+  /api/v1/terrain/coverage:
+    get:
+      operationId: getTerrainCoverage
+      summary: getTerrainCoverage
+      x-implementation-status: planned
+      parameters:
+      - name: latitude
+        in: query
+        required: true
+        schema: &id002
+          type: number
+          minimum: -90
+          maximum: 90
+      - name: longitude
+        in: query
+        required: true
+        schema: &id003
+          type: number
+          exclusiveMaximum: 360
+          minimum: -180
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerrainCoverage'
+              examples:
+                unavailable:
+                  summary: Development/test fixture; not measured NASA results
+                  externalValue: ./examples/terrain-unavailable.json
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+  /api/v1/terrain/regions/{region_id}/heightmap:
+    get:
+      operationId: getHeightmap
+      summary: getHeightmap
+      x-implementation-status: planned
+      parameters:
+      - name: region_id
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Heightmap'
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+  /api/v1/resources/csa:
+    get:
+      operationId: listCSAResources
+      summary: listCSAResources
+      x-implementation-status: planned
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 30
+          default: 10
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CSAResources'
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+  /api/v1/ephemeris/now:
+    post:
+      operationId: submitNowRequest
+      summary: submitNowRequest
+      x-implementation-status: planned
+      parameters: []
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                terrain_unavailable:
+                  summary: Development/test fixture
+                  externalValue: ./examples/terrain-unavailable-error.json
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '202':
+          description: Accepted asynchronous calculation
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/JobAccepted'
+                - properties:
+                    kind:
+                      const: now
+              examples:
+                accepted:
+                  summary: Development/test fixture; not measured NASA results
+                  externalValue: ./examples/job-accepted-now.json
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NowRequest'
+      x-reject-unknown-query-parameters: true
+  /api/v1/ephemeris/timeline:
+    post:
+      operationId: submitTimelineRequest
+      summary: submitTimelineRequest
+      x-implementation-status: planned
+      parameters: []
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                terrain_unavailable:
+                  summary: Development/test fixture
+                  externalValue: ./examples/terrain-unavailable-error.json
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '202':
+          description: Accepted asynchronous calculation
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/JobAccepted'
+                - properties:
+                    kind:
+                      const: timeline
+              examples:
+                accepted:
+                  summary: Development/test fixture; not measured NASA results
+                  externalValue: ./examples/job-accepted.json
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimelineRequest'
+      x-reject-unknown-query-parameters: true
+  /api/v1/ephemeris/compare:
+    post:
+      operationId: submitComparisonRequest
+      summary: submitComparisonRequest
+      x-implementation-status: planned
+      parameters: []
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples:
+                terrain_unavailable:
+                  summary: Development/test fixture
+                  externalValue: ./examples/terrain-unavailable-error.json
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '202':
+          description: Accepted asynchronous calculation
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/JobAccepted'
+                - properties:
+                    kind:
+                      const: comparison
+              examples:
+                accepted:
+                  summary: Development/test fixture; not measured NASA results
+                  externalValue: ./examples/job-accepted-comparison.json
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComparisonRequest'
+            examples:
+              comparison:
+                summary: Development/test fixture
+                externalValue: ./examples/comparison-request.json
+      x-reject-unknown-query-parameters: true
+  /api/v1/jobs/{job_id}:
+    get:
+      operationId: getJob
+      summary: getJob
+      x-implementation-status: planned
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+              examples:
+                queued:
+                  summary: Development/test fixture; not measured NASA results
+                  externalValue: ./examples/job-queued.json
+                running:
+                  summary: Development/test fixture; not measured NASA results
+                  externalValue: ./examples/job-running.json
+                failed:
+                  summary: Development/test fixture; not measured NASA results
+                  externalValue: ./examples/job-failed.json
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+  /api/v1/jobs/{job_id}/result:
+    get:
+      operationId: getJobResult
+      summary: getJobResult
+      x-implementation-status: planned
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '400':
+          description: 'INVALID_REQUEST: malformed structure, missing required fields
+            or unknown fields.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '404':
+          description: 'Unknown resource. For job routes: JOB_NOT_FOUND.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '422':
+          description: 'VALIDATION_ERROR: invalid values or dates; TERRAIN_UNAVAILABLE
+            for requested terrain without suitable coverage.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '429':
+          description: Rate limit exceeded; Retry-After is required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            Retry-After:
+              required: true
+              description: Seconds until retry (nonnegative integer).
+              schema:
+                type: string
+                pattern: ^[0-9]+$
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '502':
+          description: Invalid external provider response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '503':
+          description: Required service unavailable with no usable cache.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+              examples: {}
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '500':
+          description: Unexpected internal error; safe public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '409':
+          description: JOB_NOT_READY while queued/running; JOB_FAILED for a failed
+            calculation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '410':
+          description: 'JOB_EXPIRED: result removed after retention period (at least
+            7 days).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+          headers:
+            X-Request-ID:
+              description: Server-generated UUID matching error.request_id.
+              schema:
+                type: string
+                format: uuid
+        '200':
+          description: 'Result type follows the job kind: now, timeline or comparison.'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/NowResult'
+                - $ref: '#/components/schemas/TimelineResult'
+                - $ref: '#/components/schemas/ComparisonResult'
+              examples:
+                now:
+                  summary: Development/test fixture; synthetic values
+                  externalValue: ./examples/observation-result.json
+                timeline:
+                  summary: Development/test fixture; synthetic values
+                  externalValue: ./examples/timeline-two-golden-windows.json
+                comparison:
+                  summary: Development/test fixture; synthetic values
+                  externalValue: ./examples/comparison-result.json
+      description: Unknown request fields and query parameters are rejected. All responses
+        use UTC timestamps ending in Z. Planned contract only; not registered in the
+        Stage 0 server.
+      x-reject-unknown-query-parameters: true
+components:
+  schemas:
+    Health:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          const: healthy
+        service:
+          const: lunar-navigator-api
+        timestamp: &id007
+          type: string
+          format: date-time
+          pattern: Z$
+        database:
+          const: ok
+      required:
+      - status
+      - service
+      - timestamp
+      - database
+    ErrorDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        reason: *id001
+      required:
+      - field
+      - reason
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          pattern: ^[A-Z][A-Z0-9_]*$
+        message: *id001
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        request_id:
+          type: string
+          format: uuid
+      required:
+      - code
+      - message
+      - details
+      - request_id
+    ErrorEnvelope:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+      required:
+      - error
+    CatalogSiteInput:
+      type: object
+      additionalProperties: false
+      properties:
+        site_id: *id001
+      required:
+      - site_id
+    CoordinateSiteInput:
+      type: object
+      additionalProperties: false
+      properties:
+        name: *id001
+        latitude: *id002
+        longitude: *id003
+      required:
+      - latitude
+      - longitude
+    SiteInput:
+      oneOf:
+      - $ref: '#/components/schemas/CatalogSiteInput'
+      - $ref: '#/components/schemas/CoordinateSiteInput'
+      description: Exactly one site selection form. Longitude is positive east and
+        normalized using ((longitude + 180) % 360) - 180. Aliases lat and lon are
+        rejected.
+    ResolvedSite:
+      type: object
+      additionalProperties: false
+      properties:
+        site_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        name: *id001
+        latitude: *id002
+        longitude: &id005
+          type: number
+          exclusiveMaximum: 180
+          minimum: -180
+        surface_elevation_m:
+          type: number
+        observer_height_m:
+          type: number
+          minimum: 0
+          maximum: 20
+      required:
+      - site_id
+      - name
+      - latitude
+      - longitude
+      - surface_elevation_m
+      - observer_height_m
+    Site:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        name: *id001
+        description:
+          type: string
+        category: *id004
+        latitude: *id002
+        longitude: *id005
+        source_url: &id006
+          type: string
+          format: uri
+        quickmap_url:
+          anyOf:
+          - *id006
+          - type: 'null'
+        terrain_region_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+      required:
+      - id
+      - name
+      - description
+      - category
+      - latitude
+      - longitude
+      - source_url
+      - quickmap_url
+      - terrain_region_id
+    SiteList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Site'
+        total:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          default: 50
+        offset:
+          type: integer
+          minimum: 0
+          default: 0
+      required:
+      - items
+      - total
+      - limit
+      - offset
+    Layer:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        name: *id001
+        provider:
+          type: string
+          enum:
+          - moon_trek
+          - lroc
+        service_type:
+          type: string
+          enum:
+          - wmts
+          - wms
+        crs_id: *id001
+        coordinate_units:
+          type: string
+          enum:
+          - degrees
+          - metres
+        extent:
+          type: array
+          items:
+            type: number
+          minItems: 4
+          maxItems: 4
+        attribution:
+          type: string
+        source_url: *id006
+        tile_matrix_set:
+          anyOf:
+          - *id001
+          - type: 'null'
+        access_url_template: *id001
+      required:
+      - id
+      - name
+      - provider
+      - service_type
+      - crs_id
+      - coordinate_units
+      - extent
+      - attribution
+      - source_url
+      - tile_matrix_set
+      - access_url_template
+      allOf:
+      - if:
+          properties:
+            service_type:
+              const: wmts
+        then:
+          properties:
+            tile_matrix_set: *id001
+        else:
+          properties:
+            tile_matrix_set:
+              type: 'null'
+      description: Extent is [min_x,min_y,max_x,max_y] in the actual lunar projection
+        identified by crs_id. URL template points to our registered-layer API route,
+        never an arbitrary provider URL.
+    LayerList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Layer'
+      required:
+      - items
+    TerrainCoverage:
+      type: object
+      additionalProperties: false
+      properties:
+        available:
+          type: boolean
+        latitude: *id002
+        longitude: *id005
+        region_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        dataset_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        resolution_m:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0
+          - type: 'null'
+        source_url:
+          anyOf:
+          - *id006
+          - type: 'null'
+        reason:
+          anyOf:
+          - type: string
+            enum:
+            - outside_coverage
+            - no_data
+          - type: 'null'
+      required:
+      - available
+      - latitude
+      - longitude
+      - region_id
+      - dataset_id
+      - resolution_m
+      - source_url
+      - reason
+      allOf:
+      - if:
+          properties:
+            available:
+              const: true
+        then:
+          properties:
+            reason:
+              type: 'null'
+            region_id: *id001
+            dataset_id: *id001
+            resolution_m:
+              type: number
+              exclusiveMinimum: 0
+            source_url: *id006
+        else:
+          properties:
+            reason:
+              type: string
+              enum:
+              - outside_coverage
+              - no_data
+    GeographicOrigin:
+      type: object
+      additionalProperties: false
+      properties:
+        latitude: *id002
+        longitude: *id005
+        elevation_m:
+          type: number
+      required:
+      - latitude
+      - longitude
+      - elevation_m
+    Heightmap:
+      type: object
+      additionalProperties: false
+      properties:
+        region_id: *id001
+        dataset_id: *id001
+        model_version: *id001
+        frame:
+          const: local_enu
+        origin:
+          $ref: '#/components/schemas/GeographicOrigin'
+        east_min_m:
+          type: number
+        north_min_m:
+          type: number
+        spacing_m:
+          type: number
+          exclusiveMinimum: 0
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        elevation_m:
+          type: array
+          items:
+            type: number
+          minItems: 1
+        source_url: *id006
+        attribution:
+          type: string
+      required:
+      - region_id
+      - dataset_id
+      - model_version
+      - frame
+      - origin
+      - east_min_m
+      - north_min_m
+      - spacing_m
+      - width
+      - height
+      - elevation_m
+      - source_url
+      - attribution
+      description: Display grid only. elevation_m has width*height values; index=row*width+column.
+        Rows increase north; columns increase east. Values are local up relative to
+        origin. Physical horizon uses original terrain with its CRS and surface curvature.
+      x-invariants:
+      - len(elevation_m) == width * height
+    CSAItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id: *id001
+        title: *id001
+        summary:
+          type: string
+        url: *id006
+        published_at: *id007
+        topics:
+          type: array
+          items: *id001
+      required:
+      - id
+      - title
+      - summary
+      - url
+      - published_at
+      - topics
+    CSAResources:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CSAItem'
+        fetched_at: *id007
+        data_status:
+          type: string
+          enum:
+          - fresh
+          - cached
+          - stale
+      required:
+      - items
+      - fetched_at
+      - data_status
+      description: An accessible feed with no matching Moon materials returns an empty
+        items array. Unavailable feed and no usable cache returns 503.
+    DirectionENU:
+      type: object
+      additionalProperties: false
+      properties:
+        east:
+          type: number
+          minimum: -1
+          maximum: 1
+        north:
+          type: number
+          minimum: -1
+          maximum: 1
+        up:
+          type: number
+          minimum: -1
+          maximum: 1
+      required:
+      - east
+      - north
+      - up
+      description: 'Unit vector: east^2+north^2+up^2=1 (floating-point tolerance 1e-6).
+        Scene mapping: x=east,y=up,z=-north. Frontend chooses display distance.'
+      x-invariants:
+      - east**2 + north**2 + up**2 == 1 within 1e-6
+    BodyObservation:
+      type: object
+      additionalProperties: false
+      properties:
+        azimuth_deg:
+          type: number
+          exclusiveMaximum: 360
+          minimum: 0
+        elevation_deg:
+          type: number
+          minimum: -90
+          maximum: 90
+        horizon_elevation_deg:
+          type: number
+          minimum: -90
+          maximum: 90
+        visible:
+          type: boolean
+        direction_enu:
+          $ref: '#/components/schemas/DirectionENU'
+      required:
+      - azimuth_deg
+      - elevation_deg
+      - horizon_elevation_deg
+      - visible
+      - direction_enu
+      description: Azimuth clockwise from north. visible = elevation_deg > horizon_elevation_deg
+        + visibility_margin_deg (strict inequality). Geometric horizon is 0 degrees.
+        Use body centers and no atmospheric refraction.
+    Point:
+      type: object
+      additionalProperties: false
+      properties:
+        timestamp: *id007
+        sun:
+          $ref: '#/components/schemas/BodyObservation'
+        earth:
+          $ref: '#/components/schemas/BodyObservation'
+        is_golden_window:
+          type: boolean
+      required:
+      - timestamp
+      - sun
+      - earth
+      - is_golden_window
+      description: is_golden_window = sun.visible AND earth.visible. Earth visibility
+        is geometric, not a radio link budget. Sun visibility is direct illumination,
+        not electrical power.
+    Source:
+      type: object
+      additionalProperties: false
+      properties:
+        name: *id001
+        url: *id006
+        version:
+          anyOf:
+          - *id001
+          - type: 'null'
+        fetched_at: *id007
+      required:
+      - name
+      - url
+      - version
+      - fetched_at
+    Meta:
+      type: object
+      additionalProperties: false
+      properties:
+        model_version: *id001
+        generated_at: *id007
+        data_status:
+          type: string
+          enum:
+          - fresh
+          - cached
+        horizon_mode:
+          type: string
+          enum:
+          - geometric
+          - terrain
+        time_resolution_minutes:
+          anyOf:
+          - type: integer
+            enum:
+            - 15
+            - 30
+            - 60
+            - 120
+            - 180
+            - 360
+          - type: 'null'
+        terrain_dataset_id:
+          anyOf:
+          - *id001
+          - type: 'null'
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+          minItems: 1
+      required:
+      - model_version
+      - generated_at
+      - data_status
+      - horizon_mode
+      - time_resolution_minutes
+      - terrain_dataset_id
+      - sources
+      description: List only sources actually used. CSA educational content and Moon
+        Trek map layers need not be sources of astronomical results. time_resolution_minutes=null
+        for now; terrain_dataset_id=null in geometric mode.
+      allOf:
+      - if:
+          properties:
+            horizon_mode:
+              const: geometric
+        then:
+          properties:
+            terrain_dataset_id:
+              type: 'null'
+        else:
+          properties:
+            terrain_dataset_id:
+              type: string
+              minLength: 1
+    NowRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        site:
+          $ref: '#/components/schemas/SiteInput'
+        target_time: &id008
+          type: string
+          format: date-time
+          description: ISO 8601 with timezone required. Entire requested period must
+            be within [2000-01-01T00:00:00Z,2050-01-01T00:00:00Z). End_time may equal
+            the exclusive upper boundary.
+          x-supported-range:
+            minimum: '2000-01-01T00:00:00Z'
+            exclusiveMaximum: '2050-01-01T00:00:00Z'
+        horizon_mode: &id009
+          type: string
+          enum:
+          - geometric
+          - terrain
+        observer_height_m: &id010
+          type: number
+          default: 2
+          minimum: 0
+          maximum: 20
+        visibility_margin_deg: &id011
+          type: number
+          default: 0
+          minimum: 0
+          maximum: 5
+      required:
+      - site
+      - target_time
+      - horizon_mode
+    TimelineRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        site:
+          $ref: '#/components/schemas/SiteInput'
+        start_time: *id008
+        duration_days: &id012
+          type: integer
+          minimum: 1
+          maximum: 30
+        step_minutes: &id013
+          type: integer
+          enum:
+          - 15
+          - 30
+          - 60
+          - 120
+          - 180
+          - 360
+        horizon_mode: *id009
+        observer_height_m: *id010
+        visibility_margin_deg: *id011
+      required:
+      - site
+      - start_time
+      - duration_days
+      - step_minutes
+      - horizon_mode
+      x-invariants:
+      - start_time + duration_days must not exceed 2050-01-01T00:00:00Z
+    ComparisonScenario:
+      type: object
+      additionalProperties: false
+      properties:
+        label: *id001
+        site:
+          $ref: '#/components/schemas/SiteInput'
+        start_time: *id008
+      required:
+      - label
+      - site
+      - start_time
+    ComparisonRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        scenarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComparisonScenario'
+          minItems: 2
+          maxItems: 6
+        duration_days: *id012
+        step_minutes: *id013
+        horizon_mode: *id009
+        observer_height_m: *id010
+        visibility_margin_deg: *id011
+      required:
+      - scenarios
+      - duration_days
+      - step_minutes
+      - horizon_mode
+      description: Scenario labels must be unique. All periods must fit the supported
+        date range. Duration, step, horizon and visibility settings are shared.
+      x-invariants:
+      - scenario labels are unique
+      - each scenario start_time + duration_days <= 2050-01-01T00:00:00Z
+    NowResult:
+      type: object
+      additionalProperties: false
+      properties:
+        site:
+          $ref: '#/components/schemas/ResolvedSite'
+        point:
+          $ref: '#/components/schemas/Point'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - site
+      - point
+      - meta
+      allOf:
+      - properties:
+          meta:
+            properties:
+              time_resolution_minutes:
+                type: 'null'
+    Window:
+      type: object
+      additionalProperties: false
+      properties:
+        start_time: *id007
+        end_time: *id007
+        duration_hours:
+          type: number
+          exclusiveMinimum: 0
+      required:
+      - start_time
+      - end_time
+      - duration_hours
+      description: Half-open interval [start_time,end_time). duration_hours=(end_time-start_time)/3600.
+    Summary:
+      type: object
+      additionalProperties: false
+      properties:
+        sunlit_hours:
+          type: number
+          minimum: 0
+          maximum: 720
+        sunlit_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+        earth_visible_hours:
+          type: number
+          minimum: 0
+          maximum: 720
+        earth_visible_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+        golden_hours:
+          type: number
+          minimum: 0
+          maximum: 720
+        golden_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+        longest_golden_window_hours:
+          type: number
+          minimum: 0
+          maximum: 720
+        average_sun_elevation_deg:
+          type: number
+          minimum: -90
+          maximum: 90
+        next_sunset_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+        next_earthset_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+      required:
+      - sunlit_hours
+      - sunlit_pct
+      - earth_visible_hours
+      - earth_visible_pct
+      - golden_hours
+      - golden_pct
+      - longest_golden_window_hours
+      - average_sun_elevation_deg
+      - next_sunset_at
+      - next_earthset_at
+      description: Percentages use interval durations divided by period duration.
+        Average elevation is duration-weighted. Next events are the first visible-to-invisible
+        transition strictly inside the calculated period; null means no such event
+        in that period, not never.
+    TimelineResult:
+      type: object
+      additionalProperties: false
+      properties:
+        site:
+          $ref: '#/components/schemas/ResolvedSite'
+        start_time: *id007
+        end_time: *id007
+        step_minutes: *id013
+        total_samples:
+          type: integer
+          minimum: 1
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/Point'
+          minItems: 1
+        sunlight_windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/Window'
+        earth_visibility_windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/Window'
+        golden_windows:
+          type: array
+          items:
+            $ref: '#/components/schemas/Window'
+        summary:
+          $ref: '#/components/schemas/Summary'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - site
+      - start_time
+      - end_time
+      - step_minutes
+      - total_samples
+      - points
+      - sunlight_windows
+      - earth_visibility_windows
+      - golden_windows
+      - summary
+      - meta
+      description: Calculation period [start_time,end_time); no sample at end_time.
+        A favorable point represents the next step or remaining period. Merge adjacent
+        favorable intervals; unfavorable intervals split windows. Boundaries have
+        step accuracy. 30 days at 60 minutes =720 samples; 14 days at 120 minutes
+        =168. Incomplete provider data fails the job.
+      x-invariants:
+      - total_samples == len(points) == duration_days * 1440 / step_minutes
+      - windows, summaries and visibility must agree with sampled intervals
+      allOf:
+      - properties:
+          meta:
+            properties:
+              time_resolution_minutes:
+                type: integer
+                enum:
+                - 15
+                - 30
+                - 60
+                - 120
+                - 180
+                - 360
+    RankedScenario:
+      type: object
+      additionalProperties: false
+      properties:
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 6
+        label: *id001
+        site:
+          $ref: '#/components/schemas/ResolvedSite'
+        start_time: *id007
+        end_time: *id007
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+        summary:
+          $ref: '#/components/schemas/Summary'
+      required:
+      - rank
+      - label
+      - site
+      - start_time
+      - end_time
+      - score
+      - summary
+    ComparisonResult:
+      type: object
+      additionalProperties: false
+      properties:
+        ranking_version:
+          const: v1
+        ranked_scenarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/RankedScenario'
+          minItems: 2
+          maxItems: 6
+        recommended_label: *id001
+        recommendation_reason: *id001
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - ranking_version
+      - ranked_scenarios
+      - recommended_label
+      - recommendation_reason
+      - meta
+      description: score=0.40*sunlit_pct+0.30*earth_visible_pct+0.30*golden_pct. Sort
+        descending by unrounded score, then longest_golden_window_hours, then original
+        request order. This is a product score, not an official NASA criterion. No
+        point arrays. Formula changes require a new ranking_version.
+      x-invariants:
+      - scores follow the v1 formula
+      - recommended_label is the first ranked scenario label
+      allOf:
+      - properties:
+          meta:
+            properties:
+              time_resolution_minutes:
+                type: integer
+                enum:
+                - 15
+                - 30
+                - 60
+                - 120
+                - 180
+                - 360
+    JobAccepted:
+      type: object
+      additionalProperties: false
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        kind: &id014
+          type: string
+          enum:
+          - now
+          - timeline
+          - comparison
+        status:
+          const: queued
+        status_url:
+          type: string
+          pattern: ^/api/v1/jobs/[^/]+$
+        result_url:
+          type: string
+          pattern: ^/api/v1/jobs/[^/]+/result$
+      required:
+      - job_id
+      - kind
+      - status
+      - status_url
+      - result_url
+    Job:
+      type: object
+      additionalProperties: false
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        kind: *id014
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+        created_at: *id007
+        started_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+        finished_at:
+          anyOf:
+          - *id007
+          - type: 'null'
+        result_url:
+          type: string
+          pattern: ^/api/v1/jobs/[^/]+/result$
+        error:
+          anyOf:
+          - $ref: '#/components/schemas/Error'
+          - type: 'null'
+      required:
+      - job_id
+      - kind
+      - status
+      - created_at
+      - started_at
+      - finished_at
+      - result_url
+      - error
+      allOf:
+      - if:
+          properties:
+            status:
+              const: queued
+        then:
+          properties:
+            started_at:
+              type: 'null'
+            finished_at:
+              type: 'null'
+            error:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              const: running
+        then:
+          properties:
+            started_at: *id007
+            finished_at:
+              type: 'null'
+            error:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              const: succeeded
+        then:
+          properties:
+            started_at: *id007
+            finished_at: *id007
+            error:
+              type: 'null'
+      - if:
+          properties:
+            status:
+              const: failed
+        then:
+          properties:
+            finished_at: *id007
+            error:
+              $ref: '#/components/schemas/Error'
+      description: Poll every 2 seconds; stop on succeeded or failed. created_at <=
+        started_at <= finished_at where present. A pre-execution failure may have
+        null started_at. Results retained for at least 7 days. Cache keys include
+        normalized coordinates, time, parameters, model version and terrain dataset.

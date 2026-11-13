@@ -1,0 +1,20 @@
+{
+  "job_id": "8e5fbe2f-1cf0-4cc7-a322-1e4390ea2d40",
+  "kind": "timeline",
+  "status": "failed",
+  "result_url": "/api/v1/jobs/8e5fbe2f-1cf0-4cc7-a322-1e4390ea2d40/result",
+  "created_at": "2027-07-15T00:00:00Z",
+  "started_at": "2027-07-15T00:00:01Z",
+  "finished_at": "2027-07-15T00:00:02Z",
+  "error": {
+    "code": "TERRAIN_UNAVAILABLE",
+    "message": "Terrain data is unavailable for the requested location.",
+    "details": [
+      {
+        "field": "site",
+        "reason": "outside_coverage"
+      }
+    ],
+    "request_id": "a706df04-b7c9-49c0-8eea-b53c71f86fe8"
+  }
+}

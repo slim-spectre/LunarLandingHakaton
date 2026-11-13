@@ -1,0 +1,25 @@
+{
+  "scenarios": [
+    {
+      "label": "Synthetic A",
+      "site": {
+        "latitude": -89.44,
+        "longitude": 222.1
+      },
+      "start_time": "2027-07-15T00:00:00Z"
+    },
+    {
+      "label": "Synthetic B",
+      "site": {
+        "latitude": -87.45,
+        "longitude": 77
+      },
+      "start_time": "2027-07-15T00:00:00Z"
+    }
+  ],
+  "duration_days": 1,
+  "step_minutes": 360,
+  "horizon_mode": "geometric",
+  "observer_height_m": 2,
+  "visibility_margin_deg": 0
+}

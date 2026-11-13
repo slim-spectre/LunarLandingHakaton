@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "DATABASE_UNAVAILABLE",
+    "message": "Database is unavailable",
+    "details": [],
+    "request_id": "a706df04-b7c9-49c0-8eea-b53c71f86fe8"
+  }
+}

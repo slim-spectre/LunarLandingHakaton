@@ -1,0 +1,77 @@
+{
+  "ranking_version": "v1",
+  "ranked_scenarios": [
+    {
+      "rank": 1,
+      "label": "Synthetic A",
+      "site": {
+        "site_id": null,
+        "name": "Synthetic development site",
+        "latitude": -89.44,
+        "longitude": -137.9,
+        "surface_elevation_m": 0,
+        "observer_height_m": 2
+      },
+      "start_time": "2027-07-15T00:00:00Z",
+      "end_time": "2027-07-16T00:00:00Z",
+      "score": 67.5,
+      "summary": {
+        "sunlit_hours": 18,
+        "sunlit_pct": 75,
+        "earth_visible_hours": 18,
+        "earth_visible_pct": 75,
+        "golden_hours": 12,
+        "golden_pct": 50,
+        "longest_golden_window_hours": 6,
+        "average_sun_elevation_deg": 15,
+        "next_sunset_at": "2027-07-15T06:00:00Z",
+        "next_earthset_at": "2027-07-15T18:00:00Z"
+      }
+    },
+    {
+      "rank": 2,
+      "label": "Synthetic B",
+      "site": {
+        "site_id": null,
+        "name": "Synthetic development site",
+        "latitude": -87.45,
+        "longitude": 77,
+        "surface_elevation_m": 0,
+        "observer_height_m": 2
+      },
+      "start_time": "2027-07-15T00:00:00Z",
+      "end_time": "2027-07-16T00:00:00Z",
+      "score": 42.5,
+      "summary": {
+        "sunlit_hours": 12,
+        "sunlit_pct": 50,
+        "earth_visible_hours": 12,
+        "earth_visible_pct": 50,
+        "golden_hours": 6,
+        "golden_pct": 25,
+        "longest_golden_window_hours": 6,
+        "average_sun_elevation_deg": 0,
+        "next_sunset_at": "2027-07-15T06:00:00Z",
+        "next_earthset_at": "2027-07-15T12:00:00Z"
+      }
+    }
+  ],
+  "recommended_label": "Synthetic A",
+  "recommendation_reason": "Synthetic A has the higher unrounded v1 product score in this development fixture.",
+  "meta": {
+    "model_version": "development-fixture-v1",
+    "generated_at": "2027-07-16T00:00:00Z",
+    "data_status": "fresh",
+    "horizon_mode": "geometric",
+    "time_resolution_minutes": 360,
+    "terrain_dataset_id": null,
+    "sources": [
+      {
+        "name": "Synthetic fixture; no live scientific calculation",
+        "url": "https://example.org/development-fixtures",
+        "version": "fixture-v1",
+        "fetched_at": "2027-07-15T00:00:00Z"
+      }
+    ]
+  }
+}

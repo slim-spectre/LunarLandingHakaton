@@ -1,0 +1,52 @@
+{
+  "site": {
+    "site_id": null,
+    "name": "Synthetic development site",
+    "latitude": -89.44,
+    "longitude": -137.9,
+    "surface_elevation_m": 0,
+    "observer_height_m": 2
+  },
+  "point": {
+    "timestamp": "2027-07-15T00:00:00Z",
+    "sun": {
+      "azimuth_deg": 0,
+      "elevation_deg": 30,
+      "horizon_elevation_deg": 0,
+      "visible": true,
+      "direction_enu": {
+        "east": 0,
+        "north": 0.8660254037844386,
+        "up": 0.5
+      }
+    },
+    "earth": {
+      "azimuth_deg": 0,
+      "elevation_deg": 30,
+      "horizon_elevation_deg": 0,
+      "visible": true,
+      "direction_enu": {
+        "east": 0,
+        "north": 0.8660254037844386,
+        "up": 0.5
+      }
+    },
+    "is_golden_window": true
+  },
+  "meta": {
+    "model_version": "development-fixture-v1",
+    "generated_at": "2027-07-16T00:00:00Z",
+    "data_status": "fresh",
+    "horizon_mode": "geometric",
+    "time_resolution_minutes": null,
+    "terrain_dataset_id": null,
+    "sources": [
+      {
+        "name": "Synthetic fixture; no live scientific calculation",
+        "url": "https://example.org/development-fixtures",
+        "version": "fixture-v1",
+        "fetched_at": "2027-07-15T00:00:00Z"
+      }
+    ]
+  }
+}
