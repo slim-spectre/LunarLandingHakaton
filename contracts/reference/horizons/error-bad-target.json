@@ -1,0 +1,17 @@
+{
+  "target": "INVALID_OBJECT",
+  "request_parameters": {
+    "COMMAND": "INVALID_OBJECT",
+    "EPHEM_TYPE": "OBSERVER",
+    "format": "json"
+  },
+  "retrieval_time": "2026-11-13T21:12:00Z",
+  "source_url": "https://ssd.jpl.nasa.gov/api/horizons.api?COMMAND=INVALID_OBJECT&EPHEM_TYPE=OBSERVER&format=json",
+  "raw_response": {
+    "signature": {
+      "source": "NASA/JPL Horizons API",
+      "version": "1.2"
+    },
+    "result": "*******************************************************************************\nJPL/DASTCOM            Small-body Index Search Results     2026-Nov-13 14:12:26\n\n Comet AND asteroid index search:\n\n   NAME = INVALID_OBJECT;\n\n Matching small-bodies: \n    No matches found.\n*******************************************************************************\n"
+  }
+}

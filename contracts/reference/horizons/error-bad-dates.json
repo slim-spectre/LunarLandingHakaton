@@ -1,0 +1,18 @@
+{
+  "target": "Sun",
+  "request_parameters": {
+    "COMMAND": "10",
+    "START_TIME": "2027-07-15 12:00",
+    "STOP_TIME": "2027-07-15 12:00"
+  },
+  "retrieval_time": "2026-11-13T21:12:00Z",
+  "source_url": "https://ssd.jpl.nasa.gov/api/horizons.api?COMMAND=10&EPHEM_TYPE=OBSERVER&CENTER=coord%40301&COORD_TYPE=GEODETIC&SITE_COORD=222.1%2C-89.44%2C0.002&START_TIME=2027-07-15+12%3A00&STOP_TIME=2027-07-15+12%3A00&format=json",
+  "raw_response": {
+    "error": "Bad dates -- start must be earlier than stop",
+    "signature": {
+      "source": "NASA/JPL Horizons API",
+      "version": "1.2"
+    },
+    "result": "*******************************************************************************\n Revised: July 31, 2013                  Sun                                 10\n\n PHYSICAL PROPERTIES (updated 2024-Oct-30):\n  GM, km^3/s^2          = 132712440041.93938  Mass, 10^24 kg        = ~1988410\n  Vol. mean radius, km  = 695700              Volume, 10^12 km^3    = 1412000\n  Solar radius (IAU2015)= 695700 km           Mean density, g/cm^3  = 1.408\n  Radius (photosphere)  = 696500 km           Angular diam at 1 AU  = 1919.3\"\n  Photosphere temp., K  = 6600 (bottom)       Photosphere temp., K  = 4400(top)\n  Photospheric depth    = ~500 km             Chromospheric depth   = ~2500 km\n  Flatness, f           = 0.00005             Adopted sid. rot. per.= 25.38 d\n  Surface gravity       =  274.0 m/s^2        Escape speed, km/s    =  617.7\n  Pole (RA,DEC), deg.   = (286.13, 63.87)     Obliquity to ecliptic = 7.25 deg.\n  Solar constant (1 AU) = 1367.6 W/m^2        Luminosity, 10^24 J/s = 382.8\n  Mass-energy conv rate = 4.260 x 10^9 kg/s   Effective temp, K     = 5772\n  Sunspot cycle         = 11.4 yr             Cycle 24 sunspot min. = 2008 A.D.\n\n  Motion relative to nearby stars = apex : R.A.= 271 deg.; DEC.= +30 deg.\n                                    speed: 19.4 km/s (0.0112 au/day)\n  Motion relative to 2.73K BB/CBR = apex : l= 264.7 +- 0.8; b= 48.2 +- 0.5 deg.\n                                    speed: 369 +-11 km/s\n*******************************************************************************\n\nBad dates -- start must be earlier than stop\n"
+  }
+}
