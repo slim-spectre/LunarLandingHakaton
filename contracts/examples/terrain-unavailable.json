@@ -1,0 +1,10 @@
+{
+  "available": false,
+  "latitude": -89.44,
+  "longitude": -137.9,
+  "region_id": null,
+  "dataset_id": null,
+  "resolution_m": null,
+  "source_url": null,
+  "reason": "outside_coverage"
+}

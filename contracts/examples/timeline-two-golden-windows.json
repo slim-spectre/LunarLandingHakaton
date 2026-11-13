@@ -1,0 +1,179 @@
+{
+  "site": {
+    "site_id": null,
+    "name": "Synthetic development site",
+    "latitude": -89.44,
+    "longitude": -137.9,
+    "surface_elevation_m": 0,
+    "observer_height_m": 2
+  },
+  "start_time": "2027-07-15T00:00:00Z",
+  "end_time": "2027-07-16T00:00:00Z",
+  "step_minutes": 360,
+  "total_samples": 4,
+  "points": [
+    {
+      "timestamp": "2027-07-15T00:00:00Z",
+      "sun": {
+        "azimuth_deg": 0,
+        "elevation_deg": 30,
+        "horizon_elevation_deg": 0,
+        "visible": true,
+        "direction_enu": {
+          "east": 0,
+          "north": 0.8660254037844386,
+          "up": 0.5
+        }
+      },
+      "earth": {
+        "azimuth_deg": 0,
+        "elevation_deg": 30,
+        "horizon_elevation_deg": 0,
+        "visible": true,
+        "direction_enu": {
+          "east": 0,
+          "north": 0.8660254037844386,
+          "up": 0.5
+        }
+      },
+      "is_golden_window": true
+    },
+    {
+      "timestamp": "2027-07-15T06:00:00Z",
+      "sun": {
+        "azimuth_deg": 0,
+        "elevation_deg": -30,
+        "horizon_elevation_deg": 0,
+        "visible": false,
+        "direction_enu": {
+          "east": 0,
+          "north": 0.8660254037844386,
+          "up": -0.5
+        }
+      },
+      "earth": {
+        "azimuth_deg": 0,
+        "elevation_deg": 30,
+        "horizon_elevation_deg": 0,
+        "visible": true,
+        "direction_enu": {
+          "east": 0,
+          "north": 0.8660254037844386,
+          "up": 0.5
+        }
+      },
+      "is_golden_window": false
+    },
+    {
+      "timestamp": "2027-07-15T12:00:00Z",
+      "sun": {
+        "azimuth_deg": 0,
+        "elevation_deg": 30,
+        "horizon_elevation_deg": 0,
+        "visible": true,
+        "direction_enu": {
+          "east": 0,
+          "north": 0.8660254037844386,
+          "up": 0.5
+        }
+      },
+      "earth": {
+        "azimuth_deg": 0,
+        "elevation_deg": 30,
+        "horizon_elevation_deg": 0,
+        "visible": true,
+        "direction_enu": {
+          "east": 0,
+          "north": 0.8660254037844386,
+          "up": 0.5
+        }
+      },
+      "is_golden_window": true
+    },
+    {
+      "timestamp": "2027-07-15T18:00:00Z",
+      "sun": {
+        "azimuth_deg": 0,
+        "elevation_deg": 30,
+        "horizon_elevation_deg": 0,
+        "visible": true,
+        "direction_enu": {
+          "east": 0,
+          "north": 0.8660254037844386,
+          "up": 0.5
+        }
+      },
+      "earth": {
+        "azimuth_deg": 0,
+        "elevation_deg": -30,
+        "horizon_elevation_deg": 0,
+        "visible": false,
+        "direction_enu": {
+          "east": 0,
+          "north": 0.8660254037844386,
+          "up": -0.5
+        }
+      },
+      "is_golden_window": false
+    }
+  ],
+  "sunlight_windows": [
+    {
+      "start_time": "2027-07-15T00:00:00Z",
+      "end_time": "2027-07-15T06:00:00Z",
+      "duration_hours": 6
+    },
+    {
+      "start_time": "2027-07-15T12:00:00Z",
+      "end_time": "2027-07-16T00:00:00Z",
+      "duration_hours": 12
+    }
+  ],
+  "earth_visibility_windows": [
+    {
+      "start_time": "2027-07-15T00:00:00Z",
+      "end_time": "2027-07-15T18:00:00Z",
+      "duration_hours": 18
+    }
+  ],
+  "golden_windows": [
+    {
+      "start_time": "2027-07-15T00:00:00Z",
+      "end_time": "2027-07-15T06:00:00Z",
+      "duration_hours": 6
+    },
+    {
+      "start_time": "2027-07-15T12:00:00Z",
+      "end_time": "2027-07-15T18:00:00Z",
+      "duration_hours": 6
+    }
+  ],
+  "summary": {
+    "sunlit_hours": 18,
+    "sunlit_pct": 75,
+    "earth_visible_hours": 18,
+    "earth_visible_pct": 75,
+    "golden_hours": 12,
+    "golden_pct": 50,
+    "longest_golden_window_hours": 6,
+    "average_sun_elevation_deg": 15,
+    "next_sunset_at": "2027-07-15T06:00:00Z",
+    "next_earthset_at": "2027-07-15T18:00:00Z"
+  },
+  "meta": {
+    "model_version": "development-fixture-v1",
+    "generated_at": "2027-07-16T00:00:00Z",
+    "data_status": "fresh",
+    "horizon_mode": "geometric",
+    "time_resolution_minutes": 360,
+    "terrain_dataset_id": null,
+    "sources": [
+      {
+        "name": "Synthetic fixture; no live scientific calculation",
+        "url": "https://example.org/development-fixtures",
+        "version": "fixture-v1",
+        "fetched_at": "2027-07-15T00:00:00Z"
+      }
+    ]
+  }
+}
