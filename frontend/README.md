@@ -1,35 +1,88 @@
-# React + TypeScript + Vite
+# Lunar Landing Site Navigator — Frontend Foundation (Stage 0)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This is the frontend application and API integration foundation for the Lunar Landing Site Navigator.
 
-Currently, two official plugins are available:
+## Node & Package Manager Baseline
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Node Baseline:** `22.12.0` (matching `.nvmrc` at repository root; Node 22.12 or newer supported).
+- **Package Manager:** `npm` (with locked, reproducible `package-lock.json`).
 
-## React Compiler
+## Environment Variables
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+Configure environment variables in a local `.env` file within `frontend/` or repository root:
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VITE_API_URL` | `http://localhost:8000` | Backend API v1 base URL. Normalizes trailing slashes automatically. |
+| `VITE_USE_CONTRACT_MOCKS` | `false` | Explicit development-only fixture mode. Never active in production builds. Displays an unmistakable `DEMO / TEST DATA` badge when active. |
 
-## Expanding the Oxlint configuration
+## Quick Start
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+```sh
+cd frontend
+npm ci
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+npm run dev
+```
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+The dev server starts on `http://localhost:5173/`.
+
+## Available Scripts
+
+- `npm run dev`: Starts the Vite development server with HMR.
+- `npm run build`: Typechecks with `tsc -b` and builds optimized production assets in `dist/`.
+- `npm run lint`: Runs fast code linting via `oxlint`.
+- `npm run typecheck`: Runs TypeScript project compilation check (`tsc -b`).
+- `npm run test`: Runs automated unit and component test suite via `vitest run`.
+- `npm run test:watch`: Runs Vitest in interactive watch mode.
+- `npm run generate:api`: Regenerates TypeScript types from `../contracts/openapi.v1.yaml` into `src/api/generated/schema.ts`.
+- `npm run check:api`: Detects schema drift by verifying that generated types are up to date with `contracts/openapi.v1.yaml`. Fails with non-zero exit code on drift.
+
+## Architecture & Module Scope
+
+- `src/api/`:
+  - `generated/schema.ts`: Auto-generated from `contracts/openapi.v1.yaml`.
+  - `types.ts`: Re-exported contract types without secondary schema duplication.
+  - `errors.ts`: `ApiClientError` class parsing the agreed `{ error: { code, message, details, request_id } }` envelope.
+  - `client.ts`: Shared API client with timeout, abort handling, base URL resolution, and GET `/api/v1/health`. Strictly avoids synthetic data fallbacks on real failures.
+  - `mocks.ts`: Synthetic development fixtures strictly from `contracts/examples/`.
+- `src/features/health/`:
+  - `HealthCard.tsx`: Backend health indicator with loading state, healthy state (200), database failure state (503), and network unreachable state.
+  - `useHealth.ts`: Initial loading state hook querying `/api/v1/health`.
+- `src/components/`:
+  - `MapSlot.tsx`: Reserved slot for lunar surface map with lunar projection support.
+  - `SceneSlot.tsx`: Reserved slot for 3D local terrain scene.
+  - `AnalyticsSlot.tsx`: Reserved slot for visibility timeline and solar analytics (Stage 1).
+  - `types.ts`: Shared coordinate types and slot interfaces.
+
+## Slavik Handoff Interface
+
+Slavik owns the map, 3D scene, and coordinate-transformation modules. The foundation pre-installs and prepares the required dependencies and provides typed integration slots:
+
+### 1. Pre-installed Dependencies
+
+- **3D Scene:** `three` (`^0.187.0`), `@react-three/fiber` (`^9.8.2`), `@types/three`.
+- **Planetary Mapping:** `ol` (`^10.11.0` - OpenLayers), `proj4` (`^2.23.0`), `@types/proj4`.
+
+### 2. Agreed Coordinate Convention (`EnuVector`)
+
+Topocentric East-North-Up unit direction vector agreed in `src/components/types.ts`:
+
+```typescript
+export interface EnuVector {
+  east: number;
+  north: number;
+  up: number;
 }
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+- Units: unit direction vectors (no display distance multiplier).
+- Tangent plane: East = +X, North = +Y, Up = +Z.
+
+### 3. Integration Slots
+
+- `MapSlot` (`src/components/MapSlot.tsx`): Integrates OpenLayers WMS/WMTS with custom lunar projections (Moon Trek / LROC).
+- `SceneSlot` (`src/components/SceneSlot.tsx`): Integrates Three.js / R3F with local heightmap mesh and Sun/Earth ENU direction vectors.
