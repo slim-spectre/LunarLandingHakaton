@@ -18,6 +18,7 @@ from app.storage import as_utc, iso, utcnow
 CSA_FEED_URL = "https://www.asc-csa.gc.ca/rss/default_eng.xml"
 ATOM = "{http://www.w3.org/2005/Atom}"
 CSA_LOCK = 740102
+CSA_REFRESH_WAIT_SECONDS = 15
 LOGGER = logging.getLogger(__name__)
 
 
@@ -143,6 +144,18 @@ def get_resources(repository, limit, fetcher=fetch_resources):
                 LOGGER.warning("CSA source refresh failed (%s)", type(exc).__name__)
         if cached and age() <= settings.csa_stale_seconds:
             return cached_result("stale")
+    if not acquired:
+        # An active refresh owns the provider; wait for its cache without another feed request.
+        deadline = time.monotonic() + CSA_REFRESH_WAIT_SECONDS
+        while True:
+            cached = repository.resource("csa:v1")
+            if cached and age() <= settings.csa_stale_seconds:
+                status = "cached" if age() < settings.csa_cache_seconds else "stale"
+                return cached_result(status)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            time.sleep(min(0.1, remaining))
     raise APIProblem(
         503, "CSA_UNAVAILABLE", "CSA resources are unavailable and no usable cache exists"
     )

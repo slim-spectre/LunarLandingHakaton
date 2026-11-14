@@ -1,93 +1,77 @@
-# Lunar Landing Site Navigator — Frontend Foundation (Stage 0)
+# Lunar Landing Site Navigator — Stage 1 frontend
 
-This is the frontend application and API integration foundation for the Lunar Landing Site Navigator.
+The existing frontend now integrates the real single-observation API, curated
+site catalog, durable observation jobs and CSA resources. Map/scene internals
+remain owned by Slavik. See [the Stage 1 handoff](../docs/integration/STAGE1_FRONTEND.md)
+for behavior, files, verification, limitations and integration details.
 
-## Node & Package Manager Baseline
+## Local setup
 
-- **Node Baseline:** `22.13.0` (matching `.nvmrc` at repository root; Node 22.13 or newer supported).
-- **Package Manager:** `npm` (with locked, reproducible `package-lock.json`).
+Use Node **22.13.0** (root `.nvmrc`) and npm 10. The committed package-lock.json
+pins the environment. Follow the root README for Python 3.12, uv, the root .env
+and PostgreSQL configuration. Do not overwrite existing local configuration.
 
-## Environment Variables
-
-Configure environment variables in a local `.env` file within `frontend/` or repository root:
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `VITE_API_URL` | `http://localhost:8000` | Backend API v1 base URL. Normalizes trailing slashes automatically. |
-| `VITE_USE_CONTRACT_MOCKS` | `false` | Explicit development-only fixture mode. Never active in production builds. Displays an unmistakable `DEMO / TEST DATA` badge when active. |
-
-## Quick Start
+From repository root:
 
 ```sh
-cd frontend
+docker compose up -d --wait postgres
+cd backend
+python -m uv sync --locked --python 3.12
+python -m uv run --locked alembic upgrade head
+python -m uv run --locked uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+In a separate terminal in backend/:
+
+```sh
+python -m uv run --locked python -m app.worker
+```
+
+In another terminal in frontend/:
+
+```sh
 npm ci
-npm run lint
-npm run typecheck
-npm run test
-npm run build
 npm run dev
 ```
 
-The dev server starts on `http://localhost:5173/`.
+Open http://localhost:5173. Without the worker, accepted observations remain
+queued. Select a site or enter custom coordinates, choose a UTC instant, and
+request an observation. Only geometric mode is available. The map is currently
+an explicitly labelled coordinate grid; the scene uses returned ENU vectors.
 
-## Available Scripts
+## Frontend environment
 
-- `npm run dev`: Starts the Vite development server with HMR.
-- `npm run build`: Typechecks with `tsc -b` and builds optimized production assets in `dist/`.
-- `npm run lint`: Runs fast code linting via `oxlint`.
-- `npm run typecheck`: Runs TypeScript project compilation check (`tsc -b`).
-- `npm run test`: Runs automated unit and component test suite via `vitest run`.
-- `npm run test:watch`: Runs Vitest in interactive watch mode.
-- `npm run generate:api`: Regenerates TypeScript types from `../contracts/openapi.v1.yaml` into `src/api/generated/schema.ts`.
-- `npm run check:api`: Detects schema drift by verifying that generated types are up to date with `contracts/openapi.v1.yaml`. Fails with non-zero exit code on drift.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| VITE_API_URL | http://localhost:8000 | API origin, without /api/v1 |
+| VITE_USE_CONTRACT_MOCKS | false | Explicit development-only **health** fixture |
 
-## Architecture & Module Scope
+If necessary, put these in ignored frontend/.env.local and restart Vite. Vite
+does not automatically load the backend root .env. Match backend CORS_ORIGINS to
+where the browser loads the frontend. The local example allows localhost:5173.
 
-- `src/api/`:
-  - `generated/schema.ts`: Auto-generated from `contracts/openapi.v1.yaml`.
-  - `types.ts`: Re-exported contract types without secondary schema duplication.
-  - `errors.ts`: `ApiClientError` class parsing the agreed `{ error: { code, message, details, request_id } }` envelope.
-  - `client.ts`: Shared API client with timeout, abort handling, base URL resolution, and GET `/api/v1/health`. Strictly avoids synthetic data fallbacks on real failures.
-  - `mocks.ts`: Synthetic development fixtures strictly from `contracts/examples/`.
-- `src/features/health/`:
-  - `HealthCard.tsx`: Backend health indicator with loading state, healthy state (200), database failure state (503), and network unreachable state.
-  - `useHealth.ts`: Initial loading state hook querying `/api/v1/health`.
-- `src/components/`:
-  - `MapSlot.tsx`: Reserved slot for lunar surface map with lunar projection support.
-  - `SceneSlot.tsx`: Reserved slot for 3D local terrain scene.
-  - `AnalyticsSlot.tsx`: Reserved slot for visibility timeline and solar analytics (Stage 1).
-  - `types.ts`: Shared coordinate types and slot interfaces.
+The development demo switch or ?demo=true labels the health fixture explicitly.
+Observations, catalog and resources always use the API. Production disables the
+health fixture. Test fixtures live in src/test/fixtures.ts and contract examples;
+none are used as production results or as a fallback for provider failures.
 
-## Slavik Handoff Interface
+## Checks
 
-Slavik owns the map, 3D scene, and coordinate-transformation modules. The foundation pre-installs and prepares the required dependencies and provides typed integration slots:
+Run in frontend/:
 
-### 1. Pre-installed Dependencies
-
-- **3D Scene:** `three` (`^0.187.0`), `@react-three/fiber` (`^9.8.2`), `@types/three`.
-- **Planetary Mapping:** `ol` (`^10.11.0` - OpenLayers), `proj4` (`^2.23.0`), `@types/proj4`.
-
-### 2. Agreed Coordinate Convention (`EnuVector`)
-
-Topocentric East-North-Up unit direction vector agreed in `src/components/types.ts`:
-
-```typescript
-export interface EnuVector {
-  east: number;
-  north: number;
-  up: number;
-}
+```sh
+npm run lint
+npm run typecheck
+npm run check:api
+npm run test -- --testTimeout=10000
+npm run build
 ```
 
-- Units: unit direction vectors (no display distance multiplier).
-- Tangent plane: East = +X, North = +Y, Up = +Z.
+npm run generate:api regenerates src/api/generated/schema.ts from the canonical
+OpenAPI contract. Review it only when the contract changes. Root .gitattributes
+preserves LF because check:api compares generated bytes. No schema change is
+needed for this Stage 1 integration. Existing CI executes the frontend checks.
 
-### 3. Integration Slots
-
-- `MapSlot` (`src/components/MapSlot.tsx`): Integrates OpenLayers WMS/WMTS with custom lunar projections (Moon Trek / LROC).
-- `SceneSlot` (`src/components/SceneSlot.tsx`): Integrates Three.js / R3F with local heightmap mesh and Sun/Earth ENU direction vectors.
-
-The generated API schema uses LF line endings (enforced by root .gitattributes),
-because check:api compares generated and committed files byte for byte. After a
-contract change, run npm run generate:api and review the generated diff. CI runs
-lint, check:api, tests and build on the pinned Node version.
+No timeline, comparison ranking, astronomy formulas or physical terrain occlusion
+are implemented in frontend components. Source text is rendered as text, and
+all displayed angles/visibility/cache/model values come from the API response.
