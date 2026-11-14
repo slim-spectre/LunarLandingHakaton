@@ -30,3 +30,15 @@ Live observation, not a production integration or scientific result. The RSS URL
   "matching_item_count": 0
 }
 ```
+
+
+## Stage 1 resource-route verification (2026-11-14)
+
+GET /api/v1/resources/csa now uses the same verified official feed with TLS 1.2,
+certificate validation and safe Atom/RSS parsing. One initial live API attempt
+returned 503 CSA_UNAVAILABLE with no cache; its exact underlying network failure
+was not identified. A later fresh-database check returned HTTP 200, items=[],
+data_status=fresh and fetched_at=2026-11-14T13:28:37.391057Z. Recreating the API app
+returned data_status=cached with the same fetched_at from PostgreSQL. No matching
+articles were fabricated. See ../integration/STAGE1_BACKEND.md for cache policies,
+reproduction, test results and the separate production worker design.

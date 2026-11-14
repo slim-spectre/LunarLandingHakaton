@@ -1,4 +1,4 @@
-# Lunar Landing Site Navigator вЂ” Stage 0
+# Lunar Landing Site Navigator - Stage 1 backend
 
 Repository root contains the existing `frontend/` and the new `backend/` side by
 side. Run root commands from the directory containing this README, not its parent.
@@ -50,9 +50,11 @@ python -m uv run --locked python --version
    uv run --locked uvicorn app.main:app --host 127.0.0.1 --port 8000
    ```
 
-   There are no domain migrations or domain tables in Stage 0. Alembic is ready
-   for future reviewed migrations. Settings read the root `.env` independently
-   of the current working directory.
+   Migration `0001_stage1` creates the curated catalog, durable observation jobs
+   and PostgreSQL caches. Settings read the root `.env` independently of the
+   current working directory. In a separate terminal from `backend/`, run
+   `uv run --locked python -m app.worker` to execute queued observations.
+   API restarts do not delete jobs; without the worker, accepted jobs remain queued.
 
 4. In another terminal, request `http://localhost:8000/api/v1/health`:
 
@@ -112,8 +114,9 @@ runs them now. No frontend package or configuration is created by this backend s
 
 Read `docs/API_V1.md`, `docs/CONTRACT_DECISIONS.md` and
 `contracts/openapi.v1.yaml`. The supplied API v1 specification is now documented
-in English with all 15 paths and synthetic fixtures. Only health is implemented;
-planned routes are explicitly marked and return 404 in the Stage 0 server.
+in English with all 15 paths and synthetic fixtures. Stage 1 implements health,
+catalog, CSA resources and single-time geometric observation jobs. Planned
+timeline, comparison and terrain operations remain unregistered.
 Errors use the agreed code, message, details and request_id fields. Remaining
 lunar frame and schema review items are explicit in CONTRACT_DECISIONS.md.
 
@@ -131,5 +134,7 @@ currently serves Atom XML, which the probe handles alongside RSS.
 
 Exit 0 means feed verification completed (including zero relevant entries);
 exit 1 means verification is incomplete and the report records the actual failure.
-No provider endpoint runs inside the API. Never store downloaded datasets, secrets,
+The CSA resource route is implemented; the verification probe remains separate.
+See `docs/integration/STAGE1_BACKEND.md` for job submission, worker recovery and
+integration with the astronomy and map owners. Never store downloaded datasets, secrets,
 virtual environments, caches, frontend dependencies or build output in Git.

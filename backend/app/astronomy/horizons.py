@@ -387,6 +387,6 @@ class HorizonsProvider:
             source_url=source_url,
             retrieval_time=retrieval_time,
             provider_name=provider_name,
-            ephemeris_source=ephem_source or "DE441",
+            ephemeris_source=ephem_source,
             request_params=params,
         )

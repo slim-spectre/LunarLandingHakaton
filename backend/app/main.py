@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from typing import Annotated, Literal
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -12,6 +12,8 @@ from starlette.exceptions import HTTPException
 
 from app.core.config import get_settings
 from app.core.database import check_database
+from app.core.problems import APIProblem, ErrorEnvelope
+from app.routes import router
 
 
 class Health(BaseModel):
@@ -20,25 +22,6 @@ class Health(BaseModel):
     service: Literal["lunar-navigator-api"] = "lunar-navigator-api"
     timestamp: str = Field(pattern="Z$", json_schema_extra={"format": "date-time"})
     database: Literal["ok"] = "ok"
-
-
-class ErrorDetail(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    field: str
-    reason: str = Field(min_length=1)
-
-
-class APIError(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    code: str = Field(pattern="^[A-Z][A-Z0-9_]*$")
-    message: str = Field(min_length=1)
-    details: list[ErrorDetail]
-    request_id: UUID
-
-
-class ErrorEnvelope(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    error: APIError
 
 
 def error_response(
@@ -73,14 +56,15 @@ async def reject_health_query(request: Request) -> None:
             raise RequestValidationError([{"type": "unexpected_body", "loc": ("body",)}])
 
 
-def create_app() -> FastAPI:
+def create_app(map_router=None) -> FastAPI:
     app = FastAPI(title="Lunar Navigator API", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
         allow_origins=get_settings().cors_origins,
         allow_credentials=False,
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
+        expose_headers=["X-Request-ID"],
     )
 
     @app.middleware("http")
@@ -116,6 +100,10 @@ def create_app() -> FastAPI:
             details,
         )
 
+    @app.exception_handler(APIProblem)
+    async def api_problem(request: Request, exc: APIProblem) -> JSONResponse:
+        return error_response(request, exc.status, exc.code, exc.message, exc.details)
+
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException) -> JSONResponse:
         response = error_response(
@@ -141,6 +129,10 @@ def create_app() -> FastAPI:
     )
     def health(database: Annotated[None, Depends(check_database)]) -> Health:
         return Health(timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"))
+
+    app.include_router(router)
+    if map_router is not None:
+        app.include_router(map_router, prefix="/api/v1")
 
     return app
 

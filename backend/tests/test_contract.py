@@ -111,7 +111,18 @@ def test_all_agreed_routes_are_documented_and_runtime_status_is_explicit():
     for path, operations in DOCUMENT["paths"].items():
         for operation in operations.values():
             assert operation["x-implementation-status"] == (
-                "implemented" if path.endswith("/health") else "planned"
+                "implemented"
+                if path
+                in {
+                    "/api/v1/health",
+                    "/api/v1/sites",
+                    "/api/v1/sites/{site_id}",
+                    "/api/v1/resources/csa",
+                    "/api/v1/ephemeris/now",
+                    "/api/v1/jobs/{job_id}",
+                    "/api/v1/jobs/{job_id}/result",
+                }
+                else "planned"
             )
             assert operation["x-reject-unknown-query-parameters"] is True
             assert operation["responses"]["429"]["headers"]["Retry-After"]["required"] is True

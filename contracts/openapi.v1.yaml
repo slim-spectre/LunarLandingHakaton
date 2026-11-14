@@ -2,12 +2,11 @@ openapi: 3.1.0
 info:
   title: Lunar Landing Site Navigator API v1
   version: 1.0.0
-  description: Agreed API v1 contract. Only GET /api/v1/health is implemented in Stage
-    0. Planned operations are explicitly marked. Every example is a synthetic development/test
-    fixture, not a measured NASA result. See docs/API_V1.md for scientific, temporal
-    and scoring rules and docs/CONTRACT_DECISIONS.md for explicit schema decisions.
-    Cross-field x-invariants require application validation; JSON Schema alone does
-    not enforce them.
+  description: Agreed API v1 contract. Stage 1 implements health, catalog, CSA resources
+    and durable single-time geometric observation jobs. Map adapter registration is
+    an explicit handoff. Timeline, comparison and physical terrain occlusion remain
+    planned. Examples are synthetic development/test fixtures, not measured NASA results.
+    See docs/API_V1.md and docs/CONTRACT_DECISIONS.md.
 paths:
   /api/v1/health:
     get:
@@ -123,14 +122,15 @@ paths:
                 healthy:
                   summary: Development/test fixture; not measured NASA results
                   externalValue: ./examples/healthy.json
-      description: 'Unknown request fields and query parameters are rejected. All
-        responses use UTC timestamps ending in Z. Stage 0: implemented.'
+      description: Unknown request fields and query parameters are rejected. Responses
+        use UTC timestamps ending in Z. Implemented in Stage 1; observation submissions
+        use geometric mode only.
       x-reject-unknown-query-parameters: true
   /api/v1/sites:
     get:
       operationId: listSites
       summary: listSites
-      x-implementation-status: planned
+      x-implementation-status: implemented
       parameters:
       - name: category
         in: query
@@ -257,15 +257,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SiteList'
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Unknown request fields and query parameters are rejected. Responses
+        use UTC timestamps ending in Z. Implemented in Stage 1; observation submissions
+        use geometric mode only.
       x-reject-unknown-query-parameters: true
   /api/v1/sites/{site_id}:
     get:
       operationId: getSite
       summary: getSite
-      x-implementation-status: planned
+      x-implementation-status: implemented
       parameters:
       - name: site_id
         in: path
@@ -374,9 +374,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Site'
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Unknown request fields and query parameters are rejected. Responses
+        use UTC timestamps ending in Z. Implemented in Stage 1; observation submissions
+        use geometric mode only.
       x-reject-unknown-query-parameters: true
   /api/v1/map/layers:
     get:
@@ -485,9 +485,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LayerList'
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Planned contract only. Not registered by this Stage 1 backend unless
+        an external map router is explicitly supplied. Timeline, comparison and physical
+        terrain occlusion are excluded.
       x-reject-unknown-query-parameters: true
   /api/v1/map/layers/{layer_id}:
     get:
@@ -600,9 +600,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Layer'
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Planned contract only. Not registered by this Stage 1 backend unless
+        an external map router is explicitly supplied. Timeline, comparison and physical
+        terrain occlusion are excluded.
       x-reject-unknown-query-parameters: true
   /api/v1/map/layers/{layer_id}/tiles/{matrix}/{row}/{col}:
     get:
@@ -736,10 +736,9 @@ paths:
               schema:
                 type: string
                 format: binary
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server. Only registered layer IDs are accepted. No arbitrary external
-        URL input. Layer metadata determines CRS, units, extent and WMTS matrix set.
+      description: Planned contract only. Not registered by this Stage 1 backend unless
+        an external map router is explicitly supplied. Timeline, comparison and physical
+        terrain occlusion are excluded.
       x-reject-unknown-query-parameters: true
   /api/v1/map/layers/{layer_id}/image:
     get:
@@ -879,10 +878,9 @@ paths:
               schema:
                 type: string
                 format: binary
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server. Only registered layer IDs are accepted. No arbitrary external
-        URL input. Layer metadata determines CRS, units, extent and WMTS matrix set.
+      description: Planned contract only. Not registered by this Stage 1 backend unless
+        an external map router is explicitly supplied. Timeline, comparison and physical
+        terrain occlusion are excluded.
       x-reject-unknown-query-parameters: true
   /api/v1/terrain/coverage:
     get:
@@ -1009,9 +1007,9 @@ paths:
                 unavailable:
                   summary: Development/test fixture; not measured NASA results
                   externalValue: ./examples/terrain-unavailable.json
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Planned contract only. Not registered by this Stage 1 backend unless
+        an external map router is explicitly supplied. Timeline, comparison and physical
+        terrain occlusion are excluded.
       x-reject-unknown-query-parameters: true
   /api/v1/terrain/regions/{region_id}/heightmap:
     get:
@@ -1124,15 +1122,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Heightmap'
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Planned contract only. Not registered by this Stage 1 backend unless
+        an external map router is explicitly supplied. Timeline, comparison and physical
+        terrain occlusion are excluded.
       x-reject-unknown-query-parameters: true
   /api/v1/resources/csa:
     get:
       operationId: listCSAResources
       summary: listCSAResources
-      x-implementation-status: planned
+      x-implementation-status: implemented
       parameters:
       - name: limit
         in: query
@@ -1243,15 +1241,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CSAResources'
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Unknown request fields and query parameters are rejected. Responses
+        use UTC timestamps ending in Z. Implemented in Stage 1; observation submissions
+        use geometric mode only.
       x-reject-unknown-query-parameters: true
   /api/v1/ephemeris/now:
     post:
       operationId: submitNowRequest
       summary: submitNowRequest
-      x-implementation-status: planned
+      x-implementation-status: implemented
       parameters: []
       responses:
         '400':
@@ -1365,9 +1363,9 @@ paths:
                 accepted:
                   summary: Development/test fixture; not measured NASA results
                   externalValue: ./examples/job-accepted-now.json
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Unknown request fields and query parameters are rejected. Responses
+        use UTC timestamps ending in Z. Implemented in Stage 1; observation submissions
+        use geometric mode only.
       requestBody:
         required: true
         content:
@@ -1493,9 +1491,9 @@ paths:
                 accepted:
                   summary: Development/test fixture; not measured NASA results
                   externalValue: ./examples/job-accepted.json
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Planned contract only. Not registered by this Stage 1 backend unless
+        an external map router is explicitly supplied. Timeline, comparison and physical
+        terrain occlusion are excluded.
       requestBody:
         required: true
         content:
@@ -1621,9 +1619,9 @@ paths:
                 accepted:
                   summary: Development/test fixture; not measured NASA results
                   externalValue: ./examples/job-accepted-comparison.json
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Planned contract only. Not registered by this Stage 1 backend unless
+        an external map router is explicitly supplied. Timeline, comparison and physical
+        terrain occlusion are excluded.
       requestBody:
         required: true
         content:
@@ -1639,7 +1637,7 @@ paths:
     get:
       operationId: getJob
       summary: getJob
-      x-implementation-status: planned
+      x-implementation-status: implemented
       parameters:
       - name: job_id
         in: path
@@ -1758,15 +1756,15 @@ paths:
                 failed:
                   summary: Development/test fixture; not measured NASA results
                   externalValue: ./examples/job-failed.json
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Unknown request fields and query parameters are rejected. Responses
+        use UTC timestamps ending in Z. Implemented in Stage 1; observation submissions
+        use geometric mode only.
       x-reject-unknown-query-parameters: true
   /api/v1/jobs/{job_id}/result:
     get:
       operationId: getJobResult
       summary: getJobResult
-      x-implementation-status: planned
+      x-implementation-status: implemented
       parameters:
       - name: job_id
         in: path
@@ -1914,9 +1912,9 @@ paths:
                 comparison:
                   summary: Development/test fixture; synthetic values
                   externalValue: ./examples/comparison-result.json
-      description: Unknown request fields and query parameters are rejected. All responses
-        use UTC timestamps ending in Z. Planned contract only; not registered in the
-        Stage 0 server.
+      description: Unknown request fields and query parameters are rejected. Responses
+        use UTC timestamps ending in Z. Implemented in Stage 1; observation submissions
+        use geometric mode only.
       x-reject-unknown-query-parameters: true
 components:
   schemas:

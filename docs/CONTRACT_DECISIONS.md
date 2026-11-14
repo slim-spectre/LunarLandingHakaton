@@ -80,3 +80,59 @@ agree its representation before implementation rather than inventing a combined 
 verification is now complete using the explicit TLS 1.2 option; actual Atom feed
 observations are documented in sources/csa.md. The observed five entries had no
 matching Moon keywords; no production CSA endpoint has been implemented.
+
+
+## Stage 1 implementation decisions (2026-11-14)
+
+- Catalog data is introduced by immutable migration 0001_stage1. Six Apollo
+  coordinates come from the cited NASA DE421 Mean Earth/Polar Axis table. The
+  Connecting Ridge and Faustini entries are representative project points from
+  the supplied API examples, with explicit descriptions; their regional source
+  page does not claim those exact points are officially selected landing sites.
+  Unverified site-specific QuickMap links and physical terrain references are null.
+- The geometric model surface elevation is 0 m relative to the Horizons reference
+  surface. It is not a measured local DEM height. observer_height_m is therefore
+  passed unchanged to the agreed service; no terrain height is fabricated.
+- Default custom-site name is "Custom site". Longitude normalization reuses the
+  agreed astronomy helper, including its six-decimal reporting convention. Raw
+  submitted coordinates remain stored separately from resolved coordinates.
+- Raw submitted JSON and normalized inputs are persisted separately. UTC cache
+  time keys preserve the actual fractional timestamp, including precision beyond
+  Python datetime microseconds, rather than silently rounding it to a different
+  instant. Denys's current service emits whole-second observations; nonzero
+  fractional requests fail explicitly with PROVIDER_TIME_MISMATCH if the service
+  changes the requested instant. They are never cached as whole-second requests.
+- model_version geometric-now-v1 identifies this geometric job pipeline, not a
+  fabricated ephemeris designation. Source versions come from the astronomy
+  service. The owner approved removing its assumed DE441 fallback: unreported
+  ephemeris versions remain null. Bump MODEL_VERSION when calculation/reference
+  settings change so old cache records cannot be reused under new model rules.
+- Jobs are always accepted as queued, including cache hits. A separate worker
+  reads the durable queue. Default execution deadline is 120 s; lease is deadline
+  plus 30 s. One shared PostgreSQL advisory slot serializes provider work. Retries
+  belong to the agreed provider (at most one retry per body); the worker adds none.
+- Expired running leases are requeued with a new fencing token. Completion is a
+  conditional write using that token, running state and unexpired lease. Provider
+  calls may repeat after a crash (at-least-once execution); stale attempts cannot
+  corrupt results. Deploy the worker under a process-group supervisor to terminate
+  orphan child processes after an abrupt parent failure.
+- Successful result retention defaults to seven days and cannot be configured
+  below seven. Expired reads return 410 even before payload maintenance runs.
+  Cleanup clears at most 100 expired payloads and 100 cache rows per poll, keeping
+  job metadata. Failed job errors remain available with 409 JOB_FAILED results.
+- Observation cache TTL is one hour. Keys include normalized coordinates, exact
+  UTC target time, observer height, margin, horizon mode, reference surface height
+  and model version. Names and catalog labels are rebound per job and do not
+  change a scientific cache key. Cached responses preserve source retrieval and
+  original generation times; cached hits do not extend cache freshness.
+- CSA uses the previously verified official feed, TLS 1.2 with certificate and
+  hostname validation, no redirects, a 2 MiB response limit and finite timeouts.
+  It reads Atom summaries or RSS descriptions, not article bodies. Cache TTL is
+  300 s; usable stale retention is 86400 s. A usable cache returns cached within
+  TTL, stale after refresh failure, or 503 CSA_UNAVAILABLE when no usable cache
+  exists. Empty matches from a valid feed are successful fresh/cached results.
+- No catalog maximum page size was invented; the specified positive limit and
+  nonnegative offset apply. Duplicate query parameters are structural 400 errors.
+- Map adapter code and handoff are absent locally and on the inspected Bogdan
+  branch. Registration accepts an exported APIRouter explicitly, with /api/v1
+  mounted once. No fake map or terrain endpoint substitutes for that dependency.
