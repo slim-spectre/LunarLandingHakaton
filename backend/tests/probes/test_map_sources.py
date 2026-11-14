@@ -1,8 +1,6 @@
 import json
 import unittest
 from pathlib import Path
-from urllib.request import Request
-
 from tools import probe_maps
 
 REFERENCE_DIR = Path(__file__).resolve().parents[3] / "contracts" / "reference" / "maps"

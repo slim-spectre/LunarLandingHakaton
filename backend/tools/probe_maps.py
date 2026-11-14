@@ -8,13 +8,18 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
-
 from xml.etree import ElementTree
 
 MAX_BYTES = 4 * 1024 * 1024
 WMTS_SOURCES = {
-    "global": "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/WMTSCapabilities.xml",
-    "south_pole": "https://trek.nasa.gov/tiles/Moon/SP/WAC_POLE_ILL_PCT_SOUTH_100M/1.0.0/WMTSCapabilities.xml",
+    "global": (
+        "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/"
+        "1.0.0/WMTSCapabilities.xml"
+    ),
+    "south_pole": (
+        "https://trek.nasa.gov/tiles/Moon/SP/WAC_POLE_ILL_PCT_SOUTH_100M/"
+        "1.0.0/WMTSCapabilities.xml"
+    ),
 }
 WMS_SOURCE = "https://wms.im-ldi.com/?SERVICE=WMS&REQUEST=GetCapabilities&VERSION=1.1.1"
 ALLOWED_HOSTS = {"trek.nasa.gov", "wms.im-ldi.com", "pgda.gsfc.nasa.gov"}
@@ -59,7 +64,11 @@ def parse_wmts(document: bytes, expected_layer: str | None = None) -> dict:
         link = layer.find(WMTS + "TileMatrixSetLink")
         matrix_link = link.findtext(WMTS + "TileMatrixSet") if link is not None else None
         resource = next(
-            (item for item in layer.findall(WMTS + "ResourceURL") if item.get("resourceType") == "tile"),
+            (
+                item
+                for item in layer.findall(WMTS + "ResourceURL")
+                if item.get("resourceType") == "tile"
+            ),
             None,
         )
         bbox = layer.find(OWS + "BoundingBox")
@@ -73,7 +82,9 @@ def parse_wmts(document: bytes, expected_layer: str | None = None) -> dict:
             None,
         )
         crs = bbox.get("crs") if bbox is not None else None
-        supported_crs = matrix_set.findtext(OWS + "SupportedCRS") if matrix_set is not None else None
+        supported_crs = (
+            matrix_set.findtext(OWS + "SupportedCRS") if matrix_set is not None else None
+        )
         if not crs or not supported_crs or not lower or not upper:
             raise ValueError("WMTS layer is missing its CRS or geographic extent")
         formats = [item.text for item in layer.findall(WMTS + "Format") if item.text]
@@ -109,7 +120,13 @@ def parse_wmts(document: bytes, expected_layer: str | None = None) -> dict:
 
 def classify_product(format_name: str, values_are_elevation: bool) -> str:
     """Separate numerical terrain grids from rendered imagery and derivatives."""
-    if values_are_elevation and format_name.lower() in {"geotiff", "tif", "tiff", "netcdf", "isis cube"}:
+    if values_are_elevation and format_name.lower() in {
+        "geotiff",
+        "tif",
+        "tiff",
+        "netcdf",
+        "isis cube",
+    }:
         return "numerical_terrain"
     return "imagery_or_derived_visualization"
 
@@ -127,30 +144,79 @@ def parse_wms(document: bytes) -> dict:
     if capability is None:
         raise ValueError("WMS capabilities has no Capability section")
     request = next((node for node in capability if node.tag.rsplit("}", 1)[-1] == "Request"), None)
-    get_map = next((node for node in (request if request is not None else ()) if node.tag.rsplit("}", 1)[-1] == "GetMap"), None)
-    formats = [node.text for node in (get_map if get_map is not None else ()) if node.tag.rsplit("}", 1)[-1] == "Format" and node.text]
+    get_map = next(
+        (
+            node
+            for node in (request if request is not None else ())
+            if node.tag.rsplit("}", 1)[-1] == "GetMap"
+        ),
+        None,
+    )
+    formats = [
+        node.text
+        for node in (get_map if get_map is not None else ())
+        if node.tag.rsplit("}", 1)[-1] == "Format" and node.text
+    ]
     root_layer = next((node for node in capability if node.tag.rsplit("}", 1)[-1] == "Layer"), None)
     if root_layer is None or not formats:
         raise ValueError("WMS capabilities is missing layers or GetMap formats")
     layers = []
 
     def visit(layer, inherited_crs=()):
-        names = [child.text for child in layer if child.tag.rsplit("}", 1)[-1] in {"CRS", "SRS"} and child.text]
+        names = [
+            child.text
+            for child in layer
+            if child.tag.rsplit("}", 1)[-1] in {"CRS", "SRS"} and child.text
+        ]
         crs_values = tuple(dict.fromkeys((*inherited_crs, *names)))
-        name = next((child.text for child in layer if child.tag.rsplit("}", 1)[-1] == "Name" and child.text), None)
-        title = next((child.text for child in layer if child.tag.rsplit("}", 1)[-1] == "Title" and child.text), None)
-        box = next((child for child in layer if child.tag.rsplit("}", 1)[-1] == "BoundingBox"), None)
+        name = next(
+            (
+                child.text
+                for child in layer
+                if child.tag.rsplit("}", 1)[-1] == "Name" and child.text
+            ),
+            None,
+        )
+        title = next(
+            (
+                child.text
+                for child in layer
+                if child.tag.rsplit("}", 1)[-1] == "Title" and child.text
+            ),
+            None,
+        )
+        box = next(
+            (child for child in layer if child.tag.rsplit("}", 1)[-1] == "BoundingBox"),
+            None,
+        )
         if name:
             if box is not None:
                 crs = box.get("CRS") or box.get("SRS")
                 extent = [float(box.get(key, "nan")) for key in ("minx", "miny", "maxx", "maxy")]
             else:
-                box = next((child for child in layer if child.tag.rsplit("}", 1)[-1] == "LatLonBoundingBox"), None)
-                crs = next((value for value in crs_values if "104903" in value or "30100" in value), None)
-                extent = [float(box.get(key, "nan")) for key in ("minx", "miny", "maxx", "maxy")] if box is not None else []
+                box = next(
+                    (
+                        child
+                        for child in layer
+                        if child.tag.rsplit("}", 1)[-1] == "LatLonBoundingBox"
+                    ),
+                    None,
+                )
+                crs = next(
+                    (value for value in crs_values if "104903" in value or "30100" in value),
+                    None,
+                )
+                extent = (
+                    [float(box.get(key, "nan")) for key in ("minx", "miny", "maxx", "maxy")]
+                    if box is not None
+                    else []
+                )
             if box is not None and (not crs or crs not in crs_values):
                 raise ValueError(f"WMS layer has invalid CRS metadata: {name}")
-            if extent and (any(value != value for value in extent) or not (extent[0] < extent[2] and extent[1] < extent[3])):
+            if extent and (
+                any(value != value for value in extent)
+                or not (extent[0] < extent[2] and extent[1] < extent[3])
+            ):
                 raise ValueError(f"WMS layer has malformed extent: {name}")
             if crs and extent:
                 layers.append({
@@ -293,7 +359,11 @@ def verify(
         parsed_wms = parse_wms(body)
         report["wms"].update(
             formats=parsed_wms["formats"],
-            layers=[layer for layer in parsed_wms["layers"] if layer["id"] in {"luna_wac_roi_south_summer", "luna_wac_global"}],
+            layers=[
+                layer
+                for layer in parsed_wms["layers"]
+                if layer["id"] in {"luna_wac_roi_south_summer", "luna_wac_global"}
+            ],
         )
         if not report["wms"]["layers"]:
             raise ValueError("WMS capabilities does not expose a supported LROC WAC layer")
@@ -325,8 +395,14 @@ def verify(
                     "verification": "incomplete",
                     "failure": f"{type(exc).__name__}: {exc}",
                 }
-                report["failures"].append(f"PGDA {name}: {report['terrain_metadata'][name]['failure']}")
-    if all(entry["verification"] == "complete" for entry in report["wmts"].values()) and report["wms"]["verification"] == "complete":
+                report["failures"].append(
+                    f"PGDA {name}: {report['terrain_metadata'][name]['failure']}"
+                )
+    wmts_complete = all(
+        entry["verification"] == "complete" for entry in report["wmts"].values()
+    )
+    wms_complete = report["wms"]["verification"] == "complete"
+    if wmts_complete and wms_complete:
         if not terrain_metadata or all(
             entry["verification"] == "complete" for entry in report["terrain_metadata"].values()
         ):
