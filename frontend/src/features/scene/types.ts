@@ -1,8 +1,11 @@
 /**
- * Types for 3D Lunar Local Scene Visualization
+ * Types for 3D Lunar Local Scene Visualization (Stage 1)
  */
 
 import type { EnuVector } from '../../lib/coordinates'
+import type { NowResult, ResolvedSite, Site } from '../../api/types'
+
+export type ObservationPoint = NowResult['point']
 
 export interface LunarSceneProps {
   className?: string
@@ -17,6 +20,15 @@ export interface LunarSceneProps {
    */
   earthDirectionEnu?: EnuVector | null
   /**
+   * Direct observation point matching canonical API contract.
+   * If provided, timestamp and azimuth/elevation angles are extracted directly.
+   */
+  observationPoint?: ObservationPoint | null
+  /**
+   * Resolved or catalog site.
+   */
+  site?: ResolvedSite | Site | null
+  /**
    * Height of the observer above the model surface in metres.
    * Default: 2.0 metres.
    */
@@ -26,9 +38,21 @@ export interface LunarSceneProps {
    */
   isLoading?: boolean
   /**
+   * Data status from result metadata ('fresh' | 'cached').
+   */
+  dataStatus?: 'fresh' | 'cached' | null
+  /**
+   * Explicit requested observation timestamp (preserved across cached requests).
+   */
+  timestamp?: string | null
+  /**
+   * Reserved for Stage 2 physical terrain elevation heightmap.
+   */
+  heightmap?: unknown | null
+  /**
    * Multiplier used strictly for rendering distance/marker visibility.
    * Kept strictly separated from physical coordinates.
-   * Default: 10.0 (scene units).
+   * Default: 1.0.
    */
   visualScale?: number
   /**

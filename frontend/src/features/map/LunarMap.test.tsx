@@ -1,12 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { LunarMap } from './LunarMap'
+import { VERIFIED_MAP_LAYERS } from './layers'
 
 describe('LunarMap component', () => {
   it('renders without crashing and shows awaiting coordinate selection by default', () => {
     render(<LunarMap />)
     expect(screen.getByTestId('lunar-map-container')).toBeInTheDocument()
-    expect(screen.getByText(/Awaiting coordinate selection/i)).toBeInTheDocument()
+    expect(screen.getByText(/Awaiting selection/i)).toBeInTheDocument()
     expect(screen.queryByTestId('lunar-coordinate-marker')).not.toBeInTheDocument()
   })
 
@@ -74,5 +75,72 @@ describe('LunarMap component', () => {
     const viewport = screen.getByTestId('lunar-map-viewport')
     fireEvent.click(viewport, { clientX: 100, clientY: 100 })
     expect(handleSelect).not.toHaveBeenCalled()
+  })
+
+  it('supports map layer switching between Moon Trek WMTS and LROC WMS', () => {
+    const handleLayerChange = vi.fn()
+    render(<LunarMap onLayerChange={handleLayerChange} />)
+
+    const select = screen.getByTestId('map-layer-select') as HTMLSelectElement
+    expect(select.value).toBe(VERIFIED_MAP_LAYERS[0].id)
+
+    // Initial layer is Moon Trek WMTS with its advertised lunar CRS
+    expect(screen.getByText(/urn:ogc:def:crs:EPSG::104903/i)).toBeInTheDocument()
+    expect(screen.getByText(/NASA\/GSFC\/ASU LROC Team; tiles served by NASA\/JPL Moon Trek/i)).toBeInTheDocument()
+
+    // Switch to LROC WMS layer
+    fireEvent.change(select, { target: { value: 'luna_wac_roi_south_summer' } })
+    expect(handleLayerChange).toHaveBeenCalledWith('luna_wac_roi_south_summer')
+    expect(screen.getByText(/IAU2000:30100/i)).toBeInTheDocument()
+    expect(screen.getByText(/cite Speyerer and Robinson \(2013\)/i)).toBeInTheDocument()
+  })
+
+  it('displays verified QuickMap link without inventing query parameters', () => {
+    const verifiedQuickmapUrl = 'https://quickmap.lroc.asu.edu/?extent=-89.5,221,-89.3,223'
+    render(<LunarMap quickmapUrl={verifiedQuickmapUrl} />)
+
+    const link = screen.getByTestId('quickmap-link')
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute('href', verifiedQuickmapUrl)
+    expect(link).toHaveTextContent(/View in QuickMap/i)
+  })
+
+  it('detects when selected coordinate is outside layer extent', () => {
+    // Custom layer with limited extent
+    const regionalLayer = {
+      ...VERIFIED_MAP_LAYERS[1],
+      id: 'custom_polar_layer',
+      extent: [-180, -90, 180, -80], // only south pole below -80 deg
+    }
+
+    const { rerender } = render(
+      <LunarMap
+        layers={[regionalLayer]}
+        selectedCoordinate={{ latitude: -85.0, longitude: 0.0 }} // inside extent
+      />
+    )
+    expect(screen.queryByTestId('layer-outside-coverage-banner')).not.toBeInTheDocument()
+
+    // Move to equator (outside extent)
+    rerender(
+      <LunarMap
+        layers={[regionalLayer]}
+        selectedCoordinate={{ latitude: 0.0, longitude: 0.0 }} // outside extent
+      />
+    )
+    expect(screen.getByTestId('layer-outside-coverage-banner')).toBeInTheDocument()
+    expect(screen.getByText(/Location outside layer coverage/i)).toBeInTheDocument()
+  })
+
+  it('handles layer image load errors and displays provider error notice', () => {
+    render(<LunarMap />)
+    const img = screen.getByTestId('lunar-layer-image')
+    expect(img).toBeInTheDocument()
+
+    // Simulate provider 502/503 network failure
+    fireEvent.error(img)
+
+    expect(screen.getByTestId('layer-image-error-notice')).toBeInTheDocument()
+    expect(screen.getByText(/Layer imagery unavailable from provider/i)).toBeInTheDocument()
   })
 })
