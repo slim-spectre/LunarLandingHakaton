@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiClient } from './client'
+import { VERIFIED_MAP_LAYERS } from '../features/map/layers'
 import {
   accepted,
   catalog,
@@ -27,6 +28,16 @@ describe('Stage 1 API transport', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+  })
+
+  it('loads registered map metadata and rejects an unsupported Earth CRS', async () => {
+    respond({ items: VERIFIED_MAP_LAYERS })
+    expect(await client.getMapLayers()).toEqual({ items: VERIFIED_MAP_LAYERS })
+    expect(fetch.mock.calls[0][0]).toBe('http://backend.test/api/v1/map/layers')
+    respond({ items: [{ ...VERIFIED_MAP_LAYERS[0], crs_id: 'EPSG:3857' }] })
+    await expect(client.getMapLayers()).rejects.toMatchObject({
+      code: 'INVALID_RESPONSE_FORMAT',
+    })
   })
 
   it('submits the exclusive site form as JSON and requires HTTP 202', async () => {
@@ -132,8 +143,21 @@ describe('Stage 1 API transport', () => {
   })
 
   it('does not render untrusted objects from malformed error details', async () => {
-    respond({ error: { code: 'SOURCE_UNAVAILABLE', message: 'Invalid envelope', details: [{ field: 'site', reason: { html: 'untrusted' } }], request_id: accepted.job_id } }, 503)
-    await expect(client.getResources()).rejects.toMatchObject({ code: 'HTTP_503', details: [] })
+    respond(
+      {
+        error: {
+          code: 'SOURCE_UNAVAILABLE',
+          message: 'Invalid envelope',
+          details: [{ field: 'site', reason: { html: 'untrusted' } }],
+          request_id: accepted.job_id,
+        },
+      },
+      503,
+    )
+    await expect(client.getResources()).rejects.toMatchObject({
+      code: 'HTTP_503',
+      details: [],
+    })
   })
   it('keeps abort and timeout active while consuming the response body', async () => {
     fetch.mockImplementationOnce((_url, options: RequestInit) =>

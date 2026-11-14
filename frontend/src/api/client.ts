@@ -11,6 +11,7 @@ import type {
   NowRequest,
   NowResult,
   CSAResources,
+  LayerList,
 } from './types'
 
 export interface ApiClientConfig {
@@ -351,6 +352,43 @@ export class ApiClient {
       )
     )
       invalidResponse()
+    return value
+  }
+
+  async getMapLayers(options?: RequestOptions): Promise<LayerList> {
+    const value = await this.request<LayerList>('/api/v1/map/layers', options)
+    if (
+      !value ||
+      !Array.isArray(value.items) ||
+      !value.items.every(
+        (layer) =>
+          record(layer) &&
+          typeof layer.id === 'string' &&
+          typeof layer.name === 'string' &&
+          typeof layer.attribution === 'string' &&
+          typeof layer.source_url === 'string' &&
+          ((layer.service_type === 'wmts' &&
+            layer.id === 'LRO_WAC_Mosaic_Global_303ppd_v02' &&
+            layer.crs_id === 'urn:ogc:def:crs:EPSG::104903' &&
+            layer.tile_matrix_set === 'default028mm') ||
+            (layer.service_type === 'wms' &&
+              layer.crs_id === 'IAU2000:30100' &&
+              layer.tile_matrix_set === null)) &&
+          layer.coordinate_units === 'degrees' &&
+          Array.isArray(layer.extent) &&
+          layer.extent.length === 4 &&
+          layer.extent.every(
+            (v) => typeof v === 'number' && Number.isFinite(v),
+          ) &&
+          layer.extent[0] < layer.extent[2] &&
+          layer.extent[1] < layer.extent[3] &&
+          typeof layer.access_url_template === 'string' &&
+          layer.access_url_template.startsWith(
+            `/api/v1/map/layers/${layer.id}/`,
+          ),
+      )
+    )
+      invalidResponse('Unsupported or invalid lunar map metadata')
     return value
   }
 

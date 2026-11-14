@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiClient } from '../../api/client'
 import { ApiClientError } from '../../api/errors'
-import type { Site, SiteList } from '../../api/types'
+import type { Site, SiteList, LayerList } from '../../api/types'
 import { SourceLink } from '../../components/SourceLink'
 import { RequestError } from '../../components/RequestError'
 import { LunarMap } from '../map'
@@ -55,6 +55,27 @@ export function ObservationWorkspace() {
       })
     return () => controller.abort()
   }, [category, offset, attempt])
+
+  const [mapLayers, setMapLayers] = useState<LayerList | null>(null)
+  const [mapError, setMapError] = useState<ApiClientError | null>(null)
+  const [mapAttempt, setMapAttempt] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    apiClient
+      .getMapLayers({ signal: controller.signal })
+      .then((value) => {
+        if (!controller.signal.aborted) setMapLayers(value)
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted)
+          setMapError(
+            error instanceof ApiClientError
+              ? error
+              : new ApiClientError({ message: 'Unable to load map layers.' }),
+          )
+      })
+    return () => controller.abort()
+  }, [mapAttempt])
 
   function reloadCatalog(nextCategory = category, nextOffset = offset) {
     setCatalog(null)
@@ -405,25 +426,50 @@ export function ObservationWorkspace() {
             >
               <h2 id="map-heading">Lunar location</h2>
               <p className="muted">
-                Schematic coordinate grid · click to choose custom coordinates.
+                Lunar imagery; click inside the map to select coordinates.
               </p>
               <div className="map-viewport">
-                <LunarMap
-                  selectedCoordinate={coordinate || null}
-                  selectedSiteId={
-                    draft.mode === 'catalog' ? draft.site?.id : null
-                  }
-                  onSelectCoordinate={(value) =>
-                    change({
-                      mode: 'custom',
-                      latitude: String(value.latitude),
-                      longitude: String(value.longitude),
-                    })
-                  }
-                />
+                {!mapLayers && !mapError && (
+                  <p role="status">Loading map layers...</p>
+                )}
+                {mapError && <RequestError error={mapError} />}
+                {mapLayers?.items.length === 0 && (
+                  <p>No registered map layers are available.</p>
+                )}
+                {mapError && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMapError(null)
+                      setMapAttempt((value) => value + 1)
+                    }}
+                  >
+                    Retry map layers
+                  </button>
+                )}
+                {!!mapLayers?.items.length && (
+                  <LunarMap
+                    layers={mapLayers.items}
+                    quickmapUrl={
+                      draft.mode === 'catalog' ? draft.site?.quickmap_url : null
+                    }
+                    selectedCoordinate={coordinate || null}
+                    selectedSiteId={
+                      draft.mode === 'catalog' ? draft.site?.id : null
+                    }
+                    onSelectCoordinate={(value) =>
+                      change({
+                        mode: 'custom',
+                        latitude: String(value.latitude),
+                        longitude: String(value.longitude),
+                      })
+                    }
+                  />
+                )}
               </div>
               <p className="field-help">
-                Provider imagery and terrain are not connected in this view.
+                Registered Moon Trek / LROC imagery. Physical terrain is not
+                modeled.
               </p>
             </section>
             <section
@@ -436,6 +482,12 @@ export function ObservationWorkspace() {
               </p>
               <div className="scene-viewport">
                 <LunarScene
+                  observationPoint={result?.point ?? null}
+                  site={
+                    result?.site ??
+                    (draft.mode === 'catalog' ? draft.site : null)
+                  }
+                  dataStatus={result?.meta.data_status ?? null}
                   sunDirectionEnu={result?.point.sun.direction_enu ?? null}
                   earthDirectionEnu={result?.point.earth.direction_enu ?? null}
                   observerHeightM={result?.site.observer_height_m}

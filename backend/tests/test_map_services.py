@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 
 from app.core.database import check_database
 from app.main import create_app
-from app.maps import router as map_router
 from app.maps.catalog import get_layer, get_layers
 from app.maps.errors import MapServiceError
 from app.maps.providers import (
@@ -29,7 +28,6 @@ JPEG = b"\xff\xd8\xfffixture"
 @pytest.fixture
 def client():
     app = create_app()
-    app.include_router(map_router)
     app.dependency_overrides[check_database] = lambda: None
     with TestClient(app) as test_client:
         yield test_client
@@ -37,6 +35,24 @@ def client():
 
 def clear_image_cache():
     IMAGE_CACHE._entries.clear()
+
+
+def test_default_application_registers_real_map_routes_once(client):
+    assert client.get("/api/v1/map/layers").status_code == 200
+    assert len(client.get("/api/v1/map/layers").json()["items"]) == 3
+    assert client.get("/api/v1/api/v1/map/layers").status_code == 404
+    assert client.get("/api/v1/map/layers/luna_wac_global").status_code == 200
+
+
+def test_map_routes_reject_get_bodies_and_duplicate_query_values(client):
+    response = client.request("GET", "/api/v1/map/layers", json={"unexpected": True})
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "INVALID_REQUEST"
+    response = client.get(
+        "/api/v1/map/layers/luna_wac_global/image?bbox=-2,-90,2,-88&width=64&width=32&height=64"
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "INVALID_REQUEST"
 
 
 def test_registry_matches_contract_and_preserves_attribution():

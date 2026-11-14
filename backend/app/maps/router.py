@@ -1,14 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query, Request
+from fastapi import APIRouter, Depends, Path, Query, Request
 from fastapi.responses import JSONResponse, Response
 
 from app.maps.catalog import Layer, get_layer, get_layers, layer_payload
 from app.maps.errors import MapServiceError, error_response
 from app.maps.providers import build_wms_request, build_wmts_url, fetch_image
 from app.maps.schemas import LayerList, MapErrorEnvelope
+from app.routes import no_get_body
 
-router = APIRouter(prefix="/api/v1/map/layers", tags=["map"])
+router = APIRouter(prefix="/api/v1/map/layers", tags=["map"], dependencies=[Depends(no_get_body)])
 ERROR_RESPONSES = {
     status: {"model": MapErrorEnvelope} for status in (400, 404, 422, 429, 500, 502, 503)
 }
@@ -21,7 +22,9 @@ ERROR_RESPONSES[429]["headers"] = {
 
 
 def _reject_unknown_query(request: Request, allowed: set[str]) -> JSONResponse | None:
-    unknown = set(request.query_params) - allowed
+    unknown = (set(request.query_params) - allowed) | {
+        key for key in allowed if len(request.query_params.getlist(key)) > 1
+    }
     if not unknown:
         return None
     return error_response(

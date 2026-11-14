@@ -1,8 +1,14 @@
-# Lunar Landing Site Navigator - Stage 1 backend
+# Lunar Landing Site Navigator - Stage 1
+
+The integrated Stage 1 workspace provides catalog/custom-site observations,
+durable jobs, CSA resources, lunar imagery and an API-driven local sky scene.
+See [Stage 1 completion and reproduction](docs/integration/STAGE1_COMPLETION.md)
+for implemented scope, final checks and remaining operational limitations.
 
 Repository root contains the existing `frontend/` and the new `backend/` side by
 side. Run root commands from the directory containing this README, not its parent.
-Frontend files and configuration belong to Sasha and Slavik and are preserved.
+Frontend configuration is preserved. Map/scene interfaces and the final shared
+integration changes are documented in the Stage 1 handoffs.
 
 Python baseline is 3.12 (`.python-version` and backend metadata); Node baseline
 is 22.13.0 (`.nvmrc`), with Node 22.13 or newer in the Node 22 series supported.
