@@ -1,14 +1,8 @@
-import React from 'react'
-import { HealthCard } from './features/health/HealthCard'
-import { MapSlot } from './components/MapSlot'
-import { SceneSlot } from './components/SceneSlot'
-import { AnalyticsSlot } from './components/AnalyticsSlot'
+import { ObservationWorkspace } from './features/observation/ObservationWorkspace'
 import { isDemoModeEnabled } from './api/mocks'
 import './App.css'
 
-export const App: React.FC = () => {
-  const isDemo = isDemoModeEnabled()
-
+export function App() {
   return (
     <div className="app-container">
       <header className="app-header">
@@ -16,35 +10,18 @@ export const App: React.FC = () => {
           <h1 className="app-title" data-testid="app-title">
             Lunar Landing Site Navigator
           </h1>
-          <span className="stage-badge">Stage 0 Baseline</span>
+          <span className="stage-badge">Stage 1</span>
         </div>
-
-        <div className="header-right">
-          {isDemo && (
-            <div className="header-demo-indicator" data-testid="header-demo-badge">
-              <span className="demo-badge">DEMO / TEST DATA ACTIVE</span>
-            </div>
-          )}
-        </div>
+        {isDemoModeEnabled() && (
+          <span className="demo-badge" data-testid="header-demo-badge">
+            DEMO HEALTH FIXTURE · Observations use the API
+          </span>
+        )}
       </header>
-
-      <main className="app-main">
-        <div className="main-grid">
-          <aside className="grid-sidebar">
-            <HealthCard />
-            <AnalyticsSlot />
-          </aside>
-
-          <section className="grid-content">
-            <MapSlot />
-            <SceneSlot />
-          </section>
-        </div>
-      </main>
-
+      <ObservationWorkspace />
       <footer className="app-footer">
-        <span>Lunar Landing Site Navigator &bull; Stage 0 Foundations</span>
-        <span>Agreed API Contract v1 &bull; NASA Artemis & CLPS Target Support</span>
+        <span>Lunar Landing Site Navigator · Geometric observations</span>
+        <span>API v1 · All observation times in UTC</span>
       </footer>
     </div>
   )

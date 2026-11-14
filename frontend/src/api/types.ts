@@ -26,6 +26,9 @@ export type Heightmap = components['schemas']['Heightmap']
 export type CSAResources = components['schemas']['CSAResources']
 export type CSAItem = components['schemas']['CSAItem']
 
+export type NowRequest = components['schemas']['NowRequest']
+export type NowResult = components['schemas']['NowResult']
+
 export type JobAccepted = components['schemas']['JobAccepted']
 export type Job = components['schemas']['Job']
 

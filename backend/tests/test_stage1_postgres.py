@@ -1,6 +1,9 @@
 import os
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from contextlib import contextmanager
 from datetime import timedelta
 from pathlib import Path
+from threading import Event
 from uuid import uuid4
 
 import pytest
@@ -13,7 +16,8 @@ from test_stage1_jobs import REQUEST, controlled
 from app.core.config import get_settings
 from app.core.database import get_engine
 from app.requests import NowRequest
-from app.storage import Repository, jobs
+from app.resources import get_resources
+from app.storage import Repository, iso, jobs
 from app.worker import HORIZONS_LOCK, run_once
 
 pytestmark = pytest.mark.integration
@@ -72,3 +76,42 @@ def test_global_provider_slot_and_claim_fencing_on_postgresql(pg_repo, stage_clo
     assert pg_repo.finish(new, result=controlled(new["normalized"]))
     assert not pg_repo.finish(old, error={"code": "stale"})
     assert pg_repo.status(job_id)["status"] == "succeeded"
+
+
+def test_parallel_csa_cold_cache_requests_share_one_refresh_on_postgresql(
+    pg_repo, stage_clock, monkeypatch
+):
+    started, release, contended = Event(), Event(), Event()
+    waiter = Repository(pg_repo.engine, pg_repo.clock)
+    original_lock = waiter.provider_lock
+    calls = []
+
+    @contextmanager
+    def observed_lock(key):
+        with original_lock(key) as acquired:
+            if not acquired:
+                contended.set()
+            yield acquired
+
+    def fetch():
+        calls.append(1)
+        started.set()
+        assert release.wait(5), "Timed out releasing the controlled CSA fetch"
+        return {"items": [], "fetched_at": iso(stage_clock[0])}
+
+    monkeypatch.setattr(waiter, "provider_lock", observed_lock)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(get_resources, pg_repo, 1, fetch)
+        try:
+            assert started.wait(3), "The controlled CSA fetch did not start"
+            second = pool.submit(get_resources, waiter, 10, fetch)
+            assert contended.wait(3), "The second request did not observe the active refresh"
+            with pytest.raises(TimeoutError):
+                second.result(timeout=0.05)
+        finally:
+            release.set()
+        fresh, cached = first.result(timeout=5), second.result(timeout=5)
+    assert calls == [1]
+    assert fresh["data_status"] == "fresh" and cached["data_status"] == "cached"
+    assert fresh["items"] == cached["items"] == []
+    assert fresh["fetched_at"] == cached["fetched_at"]

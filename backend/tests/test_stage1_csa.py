@@ -1,4 +1,6 @@
+from contextlib import nullcontext
 from datetime import timedelta
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -85,6 +87,66 @@ def test_csa_fresh_cached_stale_and_recovery(stage_repo, stage_clock):
 def test_csa_empty_feed_is_a_valid_fresh_result(stage_repo, stage_clock):
     result = get_resources(stage_repo, 10, lambda: {"items": [], "fetched_at": iso(stage_clock[0])})
     assert result["items"] == [] and result["data_status"] == "fresh"
+
+
+def test_csa_waiter_reads_initial_refresh_without_duplicate_fetch(
+    stage_repo, stage_clock, monkeypatch
+):
+    from app import resources
+
+    elapsed = [0.0]
+    refreshed = payload(stage_clock)
+
+    def sleep(seconds):
+        elapsed[0] += seconds
+        stage_repo.save_resource("csa:v1", refreshed, stage_clock[0])
+
+    monkeypatch.setattr(stage_repo, "provider_lock", lambda key: nullcontext(False))
+    monkeypatch.setattr(
+        resources, "time", SimpleNamespace(monotonic=lambda: elapsed[0], sleep=sleep)
+    )
+    result = get_resources(stage_repo, 1, lambda: pytest.fail("Do not duplicate an active fetch"))
+    assert result == {**refreshed, "items": refreshed["items"][:1], "data_status": "cached"}
+    assert 0 < elapsed[0] <= 0.1
+
+
+def test_csa_wait_is_bounded_and_rejects_expired_cache(stage_repo, stage_clock, monkeypatch):
+    from app import resources
+
+    stage_repo.save_resource("csa:v1", payload(stage_clock), stage_clock[0])
+    stage_clock[0] += timedelta(days=2)
+    elapsed = [0.0]
+
+    def sleep(seconds):
+        assert 0 < seconds <= 0.1
+        elapsed[0] += seconds
+
+    monkeypatch.setattr(stage_repo, "provider_lock", lambda key: nullcontext(False))
+    monkeypatch.setattr(resources, "CSA_REFRESH_WAIT_SECONDS", 0.25)
+    monkeypatch.setattr(
+        resources, "time", SimpleNamespace(monotonic=lambda: elapsed[0], sleep=sleep)
+    )
+    with pytest.raises(APIProblem) as problem:
+        get_resources(stage_repo, 10, lambda: pytest.fail("Do not duplicate an active fetch"))
+    assert problem.value.code == "CSA_UNAVAILABLE"
+    assert elapsed[0] == pytest.approx(0.25)
+
+
+def test_csa_contention_returns_retained_stale_cache_without_waiting(
+    stage_repo, stage_clock, monkeypatch
+):
+    from app import resources
+
+    refreshed = payload(stage_clock)
+    stage_repo.save_resource("csa:v1", refreshed, stage_clock[0])
+    stage_clock[0] += timedelta(minutes=6)
+    monkeypatch.setattr(stage_repo, "provider_lock", lambda key: nullcontext(False))
+    monkeypatch.setattr(
+        resources,
+        "time",
+        SimpleNamespace(sleep=lambda seconds: pytest.fail("Usable stale cache must not wait")),
+    )
+    assert get_resources(stage_repo, 10, unavailable) == {**refreshed, "data_status": "stale"}
 
 
 def test_csa_http_limits_and_unavailable_error(stage_client, stage_clock):

@@ -116,6 +116,13 @@ returns 503 CSA_UNAVAILABLE. An accessible feed with no Moon-related entries is 
 valid empty response. No development feed or observation fixture is enabled by a
 production flag. Controlled executors/fetchers exist only as injected test dependencies.
 
+Concurrent cold-cache requests share the existing PostgreSQL provider lock. A
+request that finds a refresh in progress and has no usable cache releases its
+database connection, then polls the cache every 100 ms for at most 15 seconds.
+It returns cached once the first request publishes the data, without starting a
+duplicate upstream fetch. Usable stale data is returned immediately. If no usable
+cache appears before the deadline, the common 503 CSA_UNAVAILABLE error remains.
+
 Optional environment settings: OBSERVATION_TIMEOUT_SECONDS (1..300, default 120),
 OBSERVATION_CACHE_SECONDS (default 3600), RESULT_RETENTION_DAYS (minimum/default 7),
 CSA_CACHE_SECONDS (default 300), CSA_STALE_SECONDS (default 86400), and the existing

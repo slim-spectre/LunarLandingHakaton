@@ -62,6 +62,6 @@ export class ApiClientError extends Error {
    * True if this represents a 503 DATABASE_UNAVAILABLE failure.
    */
   get isDatabaseUnavailable(): boolean {
-    return this.code === 'DATABASE_UNAVAILABLE' || this.statusCode === 503
+    return this.code === 'DATABASE_UNAVAILABLE'
   }
 }
