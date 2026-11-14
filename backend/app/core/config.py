@@ -13,6 +13,8 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://localhost/lunar_navigator"
     cors_origins: list[str] = ["http://localhost:5173"]
+    horizons_api_url: str = "https://ssd.jpl.nasa.gov/api/horizons.api"
+    horizons_timeout_seconds: float = 15.0
 
     @field_validator("database_url")
     @classmethod
