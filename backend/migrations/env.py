@@ -1,10 +1,10 @@
 from alembic import context
-from sqlalchemy import MetaData
 
 from app.core.config import get_settings
 from app.core.database import get_engine
+from app.storage import metadata
 
-target_metadata = MetaData()
+target_metadata = metadata
 
 if context.is_offline_mode():
     context.configure(

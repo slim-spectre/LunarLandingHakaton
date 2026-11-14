@@ -121,12 +121,17 @@ def test_unexpected_failure_has_safe_complete_error_envelope():
     assert "sensitive internals" not in response.text
 
 
-def test_runtime_registers_only_health_product_route(client):
-    assert set(client.get("/openapi.json").json()["paths"]) == {"/api/v1/health"}
+def test_runtime_registers_only_stage1_product_routes(client):
+    assert set(client.get("/openapi.json").json()["paths"]) == {
+        "/api/v1/health",
+        "/api/v1/sites",
+        "/api/v1/sites/{site_id}",
+        "/api/v1/resources/csa",
+        "/api/v1/ephemeris/now",
+        "/api/v1/jobs/{job_id}",
+        "/api/v1/jobs/{job_id}/result",
+    }
     for method, path in (
-        ("GET", "/api/v1/sites"),
-        ("GET", "/api/v1/resources/csa"),
-        ("POST", "/api/v1/ephemeris/now"),
         ("POST", "/api/v1/ephemeris/timeline"),
         ("POST", "/api/v1/ephemeris/compare"),
     ):

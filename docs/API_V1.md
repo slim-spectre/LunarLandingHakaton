@@ -233,10 +233,25 @@ The common error shape is:
 Never replace a failure with fabricated angles or windows. Failed jobs store the
 same error object (code, message, details, request_id), without a second envelope.
 
-## Stage 0 runtime boundary
+## Current Stage 1 runtime boundary
 
-Only GET /api/v1/health is implemented. Its success response is
-`{status:"healthy",service:"lunar-navigator-api",timestamp:"<UTC timestamp ending in Z>",database:"ok"}`.
-A real bounded SELECT 1 checks PostgreSQL. Database failure returns 503 with
-DATABASE_UNAVAILABLE and the complete common error envelope. Planned operations
-are documented in OpenAPI but remain absent from the running server.
+Implemented: GET /health, GET /sites, GET /sites/{site_id}, GET /resources/csa,
+POST /ephemeris/now, GET /jobs/{job_id}, GET /jobs/{job_id}/result, all under
+/api/v1. Health performs a real bounded SELECT 1. Calculations run in a separate
+durable PostgreSQL-backed worker, not an in-process HTTP background task.
+Every successful submission returns 202 and a queued acceptance object, including
+cache hits. Stage 1 supports geometric mode only; requested terrain mode returns
+422 TERRAIN_UNAVAILABLE. Unnamed custom sites use the name "Custom site".
+
+Only successful calculation results are cached, and ready results remain available
+for at least seven days after completion. Resource caching distinguishes fresh,
+cached and stale data and never replaces provider failure with synthetic data.
+
+The map router can be mounted explicitly via create_app(map_router=exported_router)
+when Bohdan's implementation is available. No map router is currently present in
+this checkout. Timeline, comparison and physical terrain occlusion remain planned
+and their routes are not registered. Full rules above describe the complete v1
+contract and do not imply that every planned operation is implemented.
+
+See integration/STAGE1_BACKEND.md for startup, recovery, cache policy, source
+provenance, remaining service precision limitations and team integration steps.

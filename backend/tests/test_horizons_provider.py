@@ -393,3 +393,17 @@ def test_live_control_scenario_shackleton_sun():
     # Live Horizons query must agree with Stage 0 verified fixture
     assert result.azimuth_deg == pytest.approx(177.278712, abs=1e-5)
     assert result.elevation_deg == pytest.approx(-1.088272, abs=1e-5)
+
+
+def test_provider_preserves_unknown_ephemeris_version_as_null():
+    body = {"result": "Synthetic parser fixture\n$$SOE\n2027-Jul-15 12:00:00, , , 0, 0,\n$$EOE"}
+    with httpx.Client(
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, json=body))
+    ) as client:
+        observation = HorizonsProvider(client=client).query_body(
+            target="Sun",
+            latitude=0,
+            longitude=0,
+            target_time="2027-07-15T12:00:00Z",
+        )
+    assert observation.ephemeris_source is None
