@@ -131,6 +131,8 @@ def test_parse_csv_delimited_table_row():
         (360.0, 0.0),
         (-360.0, 0.0),
         (540.0, -180.0),
+        (179.9999999, -180.0),
+        (-180.0000001, -180.0),
     ],
 )
 def test_longitude_normalization(input_lon: float, expected_lon: float):
@@ -154,6 +156,69 @@ def test_longitude_normalization(input_lon: float, expected_lon: float):
 )
 def test_meters_to_km(meters: float, expected_km: float):
     assert meters_to_km(meters) == pytest.approx(expected_km)
+
+
+@pytest.mark.parametrize("longitude", [float("nan"), float("inf"), float("-inf")])
+def test_longitude_normalization_rejects_nonfinite_values(longitude):
+    with pytest.raises(ValueError, match="finite"):
+        normalize_longitude(longitude)
+
+
+@pytest.mark.parametrize(
+    "azimuth,elevation",
+    [
+        ("NaN", "0"),
+        ("inf", "0"),
+        ("-1", "0"),
+        ("360", "0"),
+        ("0", "NaN"),
+        ("0", "inf"),
+        ("0", "999"),
+        ("0", "-91"),
+    ],
+)
+def test_observation_parser_rejects_nonfinite_and_out_of_range_angles(azimuth, elevation):
+    with pytest.raises(HorizonsParseError, match="must be finite"):
+        parse_observation_row(f"2027-Jul-15 12:00:00, , , {azimuth}, {elevation},")
+
+
+@pytest.mark.parametrize(
+    "stop_time,expected_stop",
+    [
+        (None, "'2027-07-15 12:01:00'"),
+        ("2027-07-15T09:00:00-04:00", "'2027-07-15 13:00:00'"),
+    ],
+)
+def test_request_times_are_converted_to_utc(stop_time, expected_stop):
+    params = build_horizons_params(
+        target="Sun",
+        latitude=-89.44,
+        longitude=222.1,
+        altitude_m=2,
+        start_time="2027-07-15T14:00:00+02:00",
+        stop_time=stop_time,
+    )
+    assert params["START_TIME"] == "'2027-07-15 12:00:00'"
+    assert params["STOP_TIME"] == expected_stop
+
+
+@pytest.mark.parametrize(
+    "start,stop",
+    [
+        ("2027-07-15T12:00:00", None),
+        ("2027-07-15T12:00:00Z", "2027-07-15T13:00:00"),
+    ],
+)
+def test_request_times_without_timezone_are_rejected(start, stop):
+    with pytest.raises(ValueError, match="timezone"):
+        build_horizons_params(
+            target="Sun",
+            latitude=0,
+            longitude=0,
+            altitude_m=2,
+            start_time=start,
+            stop_time=stop,
+        )
 
 
 # --- 5. Timezone & Timestamp Handling Tests ---

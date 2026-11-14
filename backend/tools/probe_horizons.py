@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 from datetime import UTC, datetime, timedelta
+from math import isfinite
 from pathlib import Path
 from typing import Any
 
@@ -68,10 +69,13 @@ class HorizonsParseError(HorizonsError):
 
 def normalize_longitude(longitude: float) -> float:
     """Normalize longitude to [-180, 180) degrees per API v1 specification."""
+    if not isfinite(longitude):
+        raise ValueError("Longitude must be finite")
     normalized = ((longitude + 180.0) % 360.0) - 180.0
     if abs(normalized) < 1e-12:
         return 0.0
-    return round(normalized, 6)
+    rounded = round(normalized, 6)
+    return -180.0 if rounded >= 180.0 else rounded
 
 
 def meters_to_km(meters: float) -> float:
@@ -95,6 +99,13 @@ def parse_horizons_timestamp(ts_str: str) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _request_time_utc(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        raise ValueError("Request times must include a timezone")
+    return parsed.astimezone(UTC)
+
+
 def build_horizons_params(
     *,
     target: str,
@@ -115,20 +126,12 @@ def build_horizons_params(
     alt_km = meters_to_km(altitude_m)
     site_coord_str = f"{longitude},{latitude},{alt_km:.6f}"
 
-    if stop_time is None:
-        # Default stop time 1 minute later for a single-instant evaluation
-        dt_start = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
-        dt_stop = dt_start + timedelta(minutes=1)
-        stop_time_str = dt_stop.strftime("%Y-%m-%d %H:%M:%S")
-    else:
-        stop_time_str = stop_time
-
-    # Clean start time string
-    if "T" in start_time:
-        dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
-        start_time_str = dt.strftime("%Y-%m-%d %H:%M:%S")
-    else:
-        start_time_str = start_time
+    dt_start = _request_time_utc(start_time)
+    dt_stop = (
+        _request_time_utc(stop_time) if stop_time is not None else dt_start + timedelta(minutes=1)
+    )
+    start_time_str = dt_start.strftime("%Y-%m-%d %H:%M:%S")
+    stop_time_str = dt_stop.strftime("%Y-%m-%d %H:%M:%S")
 
     params = {
         "format": "json",
@@ -190,6 +193,11 @@ def parse_observation_row(line: str) -> dict[str, Any]:
         raise HorizonsParseError(
             f"Failed to parse numeric azimuth/elevation from row: '{cleaned}'"
         ) from exc
+
+    if not isfinite(azimuth_deg) or not 0 <= azimuth_deg < 360:
+        raise HorizonsParseError("Azimuth must be finite and in [0, 360)")
+    if not isfinite(elevation_deg) or not -90 <= elevation_deg <= 90:
+        raise HorizonsParseError("Elevation must be finite and in [-90, 90]")
 
     timestamp_iso = parse_horizons_timestamp(dt_str)
     return {

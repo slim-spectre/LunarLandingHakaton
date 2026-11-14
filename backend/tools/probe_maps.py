@@ -17,8 +17,7 @@ WMTS_SOURCES = {
         "1.0.0/WMTSCapabilities.xml"
     ),
     "south_pole": (
-        "https://trek.nasa.gov/tiles/Moon/SP/WAC_POLE_ILL_PCT_SOUTH_100M/"
-        "1.0.0/WMTSCapabilities.xml"
+        "https://trek.nasa.gov/tiles/Moon/SP/WAC_POLE_ILL_PCT_SOUTH_100M/1.0.0/WMTSCapabilities.xml"
     ),
 }
 WMS_SOURCE = "https://wms.im-ldi.com/?SERVICE=WMS&REQUEST=GetCapabilities&VERSION=1.1.1"
@@ -77,8 +76,11 @@ def parse_wmts(document: bytes, expected_layer: str | None = None) -> dict:
         if not identifier or not matrix_link or resource is None or not resource.get("template"):
             raise ValueError("WMTS layer is missing its identifier, matrix set, or tile resource")
         matrix_set = next(
-            (item for item in contents.findall(WMTS + "TileMatrixSet")
-             if item.findtext(OWS + "Identifier") == matrix_link),
+            (
+                item
+                for item in contents.findall(WMTS + "TileMatrixSet")
+                if item.findtext(OWS + "Identifier") == matrix_link
+            ),
             None,
         )
         crs = bbox.get("crs") if bbox is not None else None
@@ -97,20 +99,22 @@ def parse_wmts(document: bytes, expected_layer: str | None = None) -> dict:
             or not (extent[0] < extent[2] and extent[1] < extent[3])
         ):
             raise ValueError(f"WMTS layer has malformed extent: {identifier}")
-        layers.append({
-            "id": identifier,
-            "title": layer.findtext(OWS + "Title"),
-            "tile_matrix_set": matrix_link,
-            "crs": crs,
-            "supported_crs": supported_crs,
-            "extent": extent,
-            "coordinate_units": "degrees" if "104903" in crs else None,
-            "formats": formats,
-            "tile_template": resource.get("template"),
-            "matrix_count": len(matrix_set.findall(WMTS + "TileMatrix")),
-            "first_matrix": matrix_set.findtext(WMTS + "TileMatrix/" + OWS + "Identifier"),
-            "style": layer.findtext(WMTS + "Style/" + OWS + "Identifier"),
-        })
+        layers.append(
+            {
+                "id": identifier,
+                "title": layer.findtext(OWS + "Title"),
+                "tile_matrix_set": matrix_link,
+                "crs": crs,
+                "supported_crs": supported_crs,
+                "extent": extent,
+                "coordinate_units": "degrees" if "104903" in crs else None,
+                "formats": formats,
+                "tile_template": resource.get("template"),
+                "matrix_count": len(matrix_set.findall(WMTS + "TileMatrix")),
+                "first_matrix": matrix_set.findtext(WMTS + "TileMatrix/" + OWS + "Identifier"),
+                "style": layer.findtext(WMTS + "Style/" + OWS + "Identifier"),
+            }
+        )
     if not layers:
         raise ValueError("WMTS capabilities advertises no layers")
     if expected_layer and not any(layer["id"] == expected_layer for layer in layers):
@@ -219,13 +223,17 @@ def parse_wms(document: bytes) -> dict:
             ):
                 raise ValueError(f"WMS layer has malformed extent: {name}")
             if crs and extent:
-                layers.append({
-                    "id": name,
-                    "title": title,
-                    "crs": crs,
-                    "coordinate_units": "degrees" if "104903" in crs or "30100" in crs else None,
-                    "extent": extent,
-                })
+                layers.append(
+                    {
+                        "id": name,
+                        "title": title,
+                        "crs": crs,
+                        "coordinate_units": "degrees"
+                        if "104903" in crs or "30100" in crs
+                        else None,
+                        "extent": extent,
+                    }
+                )
         for child in layer:
             if child.tag.rsplit("}", 1)[-1] == "Layer":
                 visit(child, crs_values)
@@ -375,9 +383,7 @@ def verify(
         report["terrain_metadata"] = {}
         for name, (url, byte_count) in DEM_SOURCES.items():
             try:
-                report["terrain_metadata"][name] = head_and_range(
-                    opener, url, byte_count, timeout
-                )
+                report["terrain_metadata"][name] = head_and_range(opener, url, byte_count, timeout)
                 metadata = report["terrain_metadata"][name]
                 metadata["verification"] = (
                     "complete"
@@ -398,9 +404,7 @@ def verify(
                 report["failures"].append(
                     f"PGDA {name}: {report['terrain_metadata'][name]['failure']}"
                 )
-    wmts_complete = all(
-        entry["verification"] == "complete" for entry in report["wmts"].values()
-    )
+    wmts_complete = all(entry["verification"] == "complete" for entry in report["wmts"].values())
     wms_complete = report["wms"]["verification"] == "complete"
     if wmts_complete and wms_complete:
         if not terrain_metadata or all(

@@ -1,6 +1,7 @@
 import json
 import unittest
 from pathlib import Path
+
 from tools import probe_maps
 
 REFERENCE_DIR = Path(__file__).resolve().parents[3] / "contracts" / "reference" / "maps"
@@ -33,10 +34,12 @@ class MapSourceParsingTests(unittest.TestCase):
                 self.requests.append((request, timeout))
                 return next(self.responses)
 
-        opener = Opener([
-            Response(200, {"content-length": "100"}),
-            Response(206, {"content-range": "bytes 0-7/100"}, b"12345678"),
-        ])
+        opener = Opener(
+            [
+                Response(200, {"content-length": "100"}),
+                Response(206, {"content-range": "bytes 0-7/100"}, b"12345678"),
+            ]
+        )
         result = probe_maps.head_and_range(
             opener, probe_maps.DEM_SOURCES["connecting_ridge_5m"][0], 8, 3
         )
@@ -64,10 +67,12 @@ class MapSourceParsingTests(unittest.TestCase):
 
         class Opener:
             def __init__(self):
-                self.responses = iter([
-                    Response(200, {"content-length": "100"}),
-                    Response(206, {"content-range": "bytes 1-8/100"}, b"12345678"),
-                ])
+                self.responses = iter(
+                    [
+                        Response(200, {"content-length": "100"}),
+                        Response(206, {"content-range": "bytes 1-8/100"}, b"12345678"),
+                    ]
+                )
 
             def open(self, request, timeout):
                 return next(self.responses)

@@ -5,7 +5,7 @@ side. Run root commands from the directory containing this README, not its paren
 Frontend files and configuration belong to Sasha and Slavik and are preserved.
 
 Python baseline is 3.12 (`.python-version` and backend metadata); Node baseline
-is 22.12.0 (`.nvmrc`), with Node 22.12 or newer in the Node 22 series supported.
+is 22.13.0 (`.nvmrc`), with Node 22.13 or newer in the Node 22 series supported.
 Install uv 0.9.9 and Docker with the Compose plugin. The backend lock is
 `backend/uv.lock`; update dependencies deliberately with `uv lock` and review changes.
 
@@ -95,7 +95,7 @@ and runs all tests against a PostgreSQL service.
 
 ## Frontend
 
-Use Node 22.12.0 (for example `nvm use` from root when supported), then:
+Use Node 22.13.0 (for example `nvm use` from root when supported), then:
 
 ```sh
 cd frontend
