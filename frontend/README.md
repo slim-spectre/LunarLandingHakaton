@@ -4,7 +4,7 @@ This is the frontend application and API integration foundation for the Lunar La
 
 ## Node & Package Manager Baseline
 
-- **Node Baseline:** `22.12.0` (matching `.nvmrc` at repository root; Node 22.12 or newer supported).
+- **Node Baseline:** `22.13.0` (matching `.nvmrc` at repository root; Node 22.13 or newer supported).
 - **Package Manager:** `npm` (with locked, reproducible `package-lock.json`).
 
 ## Environment Variables
@@ -86,3 +86,8 @@ export interface EnuVector {
 
 - `MapSlot` (`src/components/MapSlot.tsx`): Integrates OpenLayers WMS/WMTS with custom lunar projections (Moon Trek / LROC).
 - `SceneSlot` (`src/components/SceneSlot.tsx`): Integrates Three.js / R3F with local heightmap mesh and Sun/Earth ENU direction vectors.
+
+The generated API schema uses LF line endings (enforced by root .gitattributes),
+because check:api compares generated and committed files byte for byte. After a
+contract change, run npm run generate:api and review the generated diff. CI runs
+lint, check:api, tests and build on the pinned Node version.

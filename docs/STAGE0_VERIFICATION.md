@@ -250,3 +250,58 @@ Executed from backend:
 README.md now documents installing uv, invoking it through `python -m uv` when
 PATH does not contain its executable, and repairing a missing managed interpreter.
 Only README.md and this report changed in the repository for this repair.
+
+
+## Follow-up: merged team changes and repaired CI
+
+On 2026-11-14, repository Yaroslav was clean at 22a3b0a. git fetch origin
+confirmed exactly one missing commit across all fetched remote branches:
+a2ec8ef from feature/slavik-map-3d. git merge --no-commit --no-ff integrated its
+12 map/scene/coordinate files without conflicts. No commit or push was made;
+the local merge remains pending until the developer commits the reviewed changes.
+
+Changed areas:
+
+- Added the colleague's docs/frontend-coordinate-conventions.md, frontend map and
+  scene components/tests, and coordinate helper/tests from that missing commit.
+- Repaired frontend/package-lock.json with Node 22.13.0/npm 10.9.2; the missing
+  @emnapi/core and @emnapi/runtime beta entries now resolve in clean installations.
+- Updated .nvmrc, README.md and frontend/README.md to Node 22.13.0, compatible
+  with jsdom 29.1.1. Added CI frontend tests and generated API type verification.
+- Added .gitattributes to force LF for frontend/src/api/generated/schema.ts.
+  The generator checks bytes, so Windows CRLF caused a false stale-file failure;
+  regeneration changed line endings only, not the API contract or generated types.
+- Formatted backend/tools/probe_maps.py and backend/tests/probes/test_map_sources.py
+  and corrected their import ordering for Ruff.
+- Fixed backend/tools/probe_horizons.py to convert both request times to UTC,
+  reject timezone-free input, reject nonfinite/out-of-range provider angles and
+  keep rounded longitudes within [-180,180). Added regression tests in
+  backend/tests/probes/test_probe_horizons.py. The same longitude boundary fix
+  and regression test were applied to the merged frontend coordinate helper.
+- Updated this verification report. No dependency ranges or product API rules
+  were changed, and no production calculation endpoints were implemented.
+
+Actual commands and results:
+
+| Command | Result |
+| --- | --- |
+| git fetch origin; git merge --no-commit --no-ff origin/feature/slavik-map-3d | Latest remote refs fetched; missing commit integrated with no conflicts and no commit. |
+| npm install --package-lock-only --ignore-scripts using Node 22.13.0/npm 10.9.2 | Lock repaired; no reported vulnerabilities. |
+| npm ci using the same Node/npm versions on Windows | Passed. |
+| npm run generate:api; npm run check:api | Passed; generated schema content matches the contract. LF enforced by Git attributes. |
+| backend ruff check . --fix; ruff format . | Import issue fixed; four changed Python files formatted. |
+| backend pytest -m "not integration" | 110 passed, 1 deselected; final Ruff lint/format checks passed for 16 Python files. |
+| Isolated Compose PostgreSQL project lunar-ci-fix-53f91558; backend pytest with TEST_DATABASE_URL | 111 passed, no skipped tests, one upstream AnyIO deprecation warning, 2.36 seconds. |
+| docker compose down --volumes for that isolated project | Temporary database container, network and volume removed successfully. |
+| Windows frontend npm run lint; npm test -- --testTimeout=10000; npm run build | Passed; 50 tests and successful production build. |
+| Linux node:22.13.0-bookworm-slim container, read-only source mounts copied into temporary container workspace | npm ci, npm run lint, npm run check:api, npm test -- --testTimeout=10000 and npm run build all passed. 50 tests passed in 1.74 seconds; lint reported zero warnings/errors. Container removed automatically. |
+| git diff --check | Passed; no whitespace errors. |
+
+Reproduce with Node from .nvmrc: enter frontend, run npm ci, npm run lint,
+npm run check:api, npm test -- --testTimeout=10000 and npm run build. From backend
+run the locked Ruff checks and pytest; set TEST_DATABASE_URL to a running local
+PostgreSQL instance to include integration tests, following README.md.
+
+GitHub Actions was not rerun or changed remotely. Live scientific provider probes
+and interactive browser/WebGL rendering were not reverified during this CI repair.
+The remaining upstream AnyIO and Three.js deprecation notices did not fail checks.
