@@ -1,5 +1,8 @@
 # Stage 1 frontend product and API integration
 
+This document records the initial frontend handoff. For the completed integration
+with the subsequently merged map/scene components, see [STAGE1_COMPLETION.md](STAGE1_COMPLETION.md).
+
 ## Scope and files
 
 Implemented in the existing frontend on branch Yaroslav. The initial worktree was
@@ -151,6 +154,7 @@ Production build reports a >500kB JavaScript chunk from the mounted Three.js sce
 it completes successfully. The existing scene test emits a Three.js CommonJS
 deprecation warning, and the real scene emits a Three.Clock deprecation warning.
 The corrected map wrapper height was rechecked visually in the real browser.
-There is no imagery/terrain, timeline or comparison/ranking
-in this workspace. Mobile layout is responsive CSS; a full mobile device matrix
+The initial workspace had no provider imagery; the final integration now displays
+registered Moon Trek and LROC imagery. Physical terrain, timeline and comparison/ranking
+remain outside Stage 1. Mobile layout is responsive CSS; a full mobile device matrix
 has not been exercised.

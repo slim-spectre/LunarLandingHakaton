@@ -8,6 +8,7 @@ import {
   within,
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { VERIFIED_MAP_LAYERS } from './features/map/layers'
 import { App } from './App'
 import { apiClient } from './api/client'
 import { ApiClientError } from './api/errors'
@@ -45,6 +46,9 @@ vi.mock('./features/scene', () => ({
 }))
 
 beforeEach(() => {
+  vi.spyOn(apiClient, 'getMapLayers').mockResolvedValue({
+    items: VERIFIED_MAP_LAYERS,
+  })
   vi.spyOn(apiClient, 'getHealth').mockResolvedValue({
     status: 'healthy',
     service: 'lunar-navigator-api',
@@ -76,6 +80,24 @@ async function selectCatalog() {
 }
 
 describe('Stage 1 observation workspace', () => {
+  it('does not replace a failed layer catalog with static operational imagery', async () => {
+    vi.mocked(apiClient.getMapLayers)
+      .mockRejectedValueOnce(
+        new ApiClientError({
+          code: 'NETWORK_ERROR',
+          message: 'Layer catalog unreachable',
+        }),
+      )
+      .mockResolvedValueOnce({ items: VERIFIED_MAP_LAYERS })
+    render(<App />)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Layer catalog unreachable',
+    )
+    expect(visual.map).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Retry map layers' }))
+    await waitFor(() => expect(visual.map).toHaveBeenCalled())
+    expect(visual.map.mock.lastCall![0].layers).toEqual(VERIFIED_MAP_LAYERS)
+  })
   it('starts with unknown operational values and no fabricated directions', async () => {
     const { container } = render(<App />)
     expect(screen.getByTestId('app-title')).toHaveTextContent(
@@ -228,6 +250,9 @@ describe('Stage 1 observation workspace', () => {
       sunDirectionEnu: observationResult.point.sun.direction_enu,
       earthDirectionEnu: observationResult.point.earth.direction_enu,
       observerHeightM: 2,
+      observationPoint: observationResult.point,
+      dataStatus: 'cached',
+      site: observationResult.site,
     })
     fireEvent.change(screen.getByLabelText('Observer height (m)'), {
       target: { value: '3' },

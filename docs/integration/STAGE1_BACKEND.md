@@ -252,12 +252,12 @@ changed to make tests pass.
 
 ## Open integration items
 
-1. Bohdan must supply the real map router export; registration is prepared and tested,
-   but production map routes cannot be claimed implemented without that dependency.
+1. Closed by final Stage 1 integration: Bohdan's real map router is registered by
+   default without duplicating its API prefix. See STAGE1_COMPLETION.md.
 2. Denys's service currently emits whole-second observations. Subsecond requests are
    preserved and fail explicitly on time mismatch. Supporting them requires an
    astronomy-service change; the infrastructure does not round them into fake success.
 3. Exact lunar terrain frame/datum and verified site-specific QuickMap links remain
    unresolved; no physical terrain data or unknown links have been invented.
-4. GitHub Actions itself was not rerun, no deployment was performed and browser UI
-   integration was not tested. Frontend logic remains the frontend developers' scope.
+4. GitHub Actions itself was not rerun and no deployment was performed. Browser UI
+   integration was subsequently verified; see STAGE1_COMPLETION.md for current results.

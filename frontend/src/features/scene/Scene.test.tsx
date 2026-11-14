@@ -29,7 +29,7 @@ describe('Scene Error Isolation (SceneErrorBoundary)', () => {
     render(
       <SceneErrorBoundary>
         <div data-testid="scene-child">Healthy Scene Content</div>
-      </SceneErrorBoundary>
+      </SceneErrorBoundary>,
     )
 
     expect(screen.getByTestId('scene-child')).toBeInTheDocument()
@@ -38,7 +38,9 @@ describe('Scene Error Isolation (SceneErrorBoundary)', () => {
 
   it('catches WebGL errors, isolates them, and renders local fallback message without crashing', () => {
     const handleError = vi.fn()
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
 
     render(
       <div>
@@ -46,7 +48,7 @@ describe('Scene Error Isolation (SceneErrorBoundary)', () => {
         <SceneErrorBoundary onError={handleError}>
           <BrokenWebGLComponent />
         </SceneErrorBoundary>
-      </div>
+      </div>,
     )
 
     // The rest of the app remains completely intact
@@ -54,7 +56,9 @@ describe('Scene Error Isolation (SceneErrorBoundary)', () => {
 
     // Local error boundary renders fallback
     expect(screen.getByTestId('scene-error-fallback')).toBeInTheDocument()
-    expect(screen.getByText(/3D Scene Rendering Unavailable/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/3D Scene Rendering Unavailable/i),
+    ).toBeInTheDocument()
     expect(screen.getByText(/WEBGL_UNSUPPORTED/i)).toBeInTheDocument()
 
     // Error handler callback was notified
@@ -64,12 +68,16 @@ describe('Scene Error Isolation (SceneErrorBoundary)', () => {
   })
 
   it('supports custom fallback node', () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
 
     render(
-      <SceneErrorBoundary fallback={<div data-testid="custom-fallback">Custom 2D Fallback</div>}>
+      <SceneErrorBoundary
+        fallback={<div data-testid="custom-fallback">Custom 2D Fallback</div>}
+      >
         <BrokenWebGLComponent />
-      </SceneErrorBoundary>
+      </SceneErrorBoundary>,
     )
 
     expect(screen.getByTestId('custom-fallback')).toBeInTheDocument()
@@ -77,7 +85,9 @@ describe('Scene Error Isolation (SceneErrorBoundary)', () => {
   })
 
   it('allows retrying after an error has been caught', () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
 
     let shouldThrow = true
     const FlakyComponent: React.FC = () => {
@@ -90,7 +100,7 @@ describe('Scene Error Isolation (SceneErrorBoundary)', () => {
     render(
       <SceneErrorBoundary>
         <FlakyComponent />
-      </SceneErrorBoundary>
+      </SceneErrorBoundary>,
     )
 
     expect(screen.getByTestId('scene-error-fallback')).toBeInTheDocument()
@@ -107,6 +117,33 @@ describe('Scene Error Isolation (SceneErrorBoundary)', () => {
 })
 
 describe('LunarScene component and coordinate orientation', () => {
+  it('uses returned visibility even above the geometric horizon with a positive margin', () => {
+    const body = {
+      azimuth_deg: 0,
+      elevation_deg: 1.5,
+      horizon_elevation_deg: 0,
+      visible: false,
+      direction_enu: azimuthElevationToEnu(0, 1.5),
+    }
+    const point: ObservationPoint = {
+      timestamp: '2027-07-15T12:00:00Z',
+      sun: body,
+      earth: body,
+      is_golden_window: false,
+    }
+    render(<LunarScene observationPoint={point} dataStatus="cached" />)
+    expect(screen.getByTestId('hud-sun-label')).toHaveTextContent('Not visible')
+    expect(screen.getByTestId('hud-earth-label')).toHaveTextContent(
+      'Not visible',
+    )
+    expect(screen.getByText(point.timestamp)).toBeInTheDocument()
+  })
+
+  it('does not infer operational angles or visibility from vector-only props', () => {
+    render(<LunarScene sunDirectionEnu={{ east: 0, north: 0, up: 1 }} />)
+    expect(screen.queryByTestId('hud-sun-label')).toBeNull()
+    expect(screen.getByText('Sun: Awaiting vector')).toBeInTheDocument()
+  })
   it('applies agreed scene orientation (scene.x = east, scene.y = up, scene.z = -north)', () => {
     // East: (1, 0, 0)
     const eastScene = enuToLocalScene({ east: 1, north: 0, up: 0 })
@@ -124,7 +161,9 @@ describe('LunarScene component and coordinate orientation', () => {
   it('renders loading overlay when isLoading is true', () => {
     render(<LunarScene isLoading={true} />)
     expect(screen.getByTestId('scene-loading-overlay')).toBeInTheDocument()
-    expect(screen.getByText(/Loading lunar scene ephemeris/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Loading lunar scene ephemeris/i),
+    ).toBeInTheDocument()
   })
 
   it('renders demonstration banner only when demonstrationMode is true', () => {
@@ -133,7 +172,9 @@ describe('LunarScene component and coordinate orientation', () => {
 
     rerender(<LunarScene demonstrationMode={true} />)
     expect(screen.getByTestId('demonstration-banner')).toBeInTheDocument()
-    expect(screen.getByText(/Demonstration Vectors Only — Not Measured Ephemeris/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Demonstration Vectors Only — Not Measured Ephemeris/i),
+    ).toBeInTheDocument()
   })
 
   it('renders container with default null directions without throwing', () => {
@@ -163,15 +204,14 @@ describe('LunarScene component and coordinate orientation', () => {
       is_golden_window: false,
     }
 
-    render(
-      <LunarScene
-        observationPoint={mockPoint}
-        dataStatus="cached"
-      />
-    )
+    render(<LunarScene observationPoint={mockPoint} dataStatus="cached" />)
 
-    expect(screen.getByTestId('hud-sun-label')).toHaveTextContent(/Sun: Az 145.2° · El 1.5° \(Visible\)/)
-    expect(screen.getByTestId('hud-earth-label')).toHaveTextContent(/Earth: Az 350.0° · El -2.3° \(Below horizon\)/)
+    expect(screen.getByTestId('hud-sun-label')).toHaveTextContent(
+      /Sun: Az 145.2° · El 1.5° \(Visible\)/,
+    )
+    expect(screen.getByTestId('hud-earth-label')).toHaveTextContent(
+      /Earth: Az 350.0° · El -2.3° \(Not visible\)/,
+    )
     expect(screen.getByText(/2026-11-14T12:00:00Z/)).toBeInTheDocument()
     expect(screen.getByText(/cached/)).toBeInTheDocument()
   })
@@ -237,7 +277,9 @@ describe('LunarScene component and coordinate orientation', () => {
   it('displays geometric horizon reference notice indicating no terrain occlusion in Stage 1', () => {
     render(<LunarScene />)
     const notice = screen.getByTestId('scene-horizon-notice')
-    expect(notice).toHaveTextContent(/Geometric Reference Horizon \(Elevation 0.0°\)/)
+    expect(notice).toHaveTextContent(
+      /Geometric Reference Horizon \(Elevation 0.0°\)/,
+    )
     expect(notice).toHaveTextContent(/Terrain occlusion not modeled in Stage 1/)
   })
 })

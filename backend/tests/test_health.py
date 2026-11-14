@@ -130,6 +130,10 @@ def test_runtime_registers_only_stage1_product_routes(client):
         "/api/v1/ephemeris/now",
         "/api/v1/jobs/{job_id}",
         "/api/v1/jobs/{job_id}/result",
+        "/api/v1/map/layers",
+        "/api/v1/map/layers/{layer_id}",
+        "/api/v1/map/layers/{layer_id}/image",
+        "/api/v1/map/layers/{layer_id}/tiles/{matrix}/{row}/{col}",
     }
     for method, path in (
         ("POST", "/api/v1/ephemeris/timeline"),

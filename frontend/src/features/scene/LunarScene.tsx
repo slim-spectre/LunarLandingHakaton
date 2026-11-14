@@ -1,11 +1,7 @@
 import React, { Suspense, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
-import {
-  enuToLocalScene,
-  isValidDirectionVector,
-  enuToAzimuthElevation,
-} from '../../lib/coordinates'
+import { enuToLocalScene, isValidDirectionVector } from '../../lib/coordinates'
 import { SceneErrorBoundary } from './SceneErrorBoundary'
 import type { LunarSceneProps } from './types'
 
@@ -26,22 +22,55 @@ const LocalAxes: React.FC<{ length?: number }> = ({ length = 5 }) => {
     return {
       eastPoints: [new THREE.Vector3(0, 0, 0), new THREE.Vector3(length, 0, 0)],
       upPoints: [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, length, 0)],
-      northPoints: [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -length)],
+      northPoints: [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -length),
+      ],
     }
   }, [length])
 
-  const eastGeo = useMemo(() => new THREE.BufferGeometry().setFromPoints(eastPoints), [eastPoints])
-  const upGeo = useMemo(() => new THREE.BufferGeometry().setFromPoints(upPoints), [upPoints])
-  const northGeo = useMemo(() => new THREE.BufferGeometry().setFromPoints(northPoints), [northPoints])
+  const eastGeo = useMemo(
+    () => new THREE.BufferGeometry().setFromPoints(eastPoints),
+    [eastPoints],
+  )
+  const upGeo = useMemo(
+    () => new THREE.BufferGeometry().setFromPoints(upPoints),
+    [upPoints],
+  )
+  const northGeo = useMemo(
+    () => new THREE.BufferGeometry().setFromPoints(northPoints),
+    [northPoints],
+  )
 
   return (
     <group data-testid="local-axes">
       {/* East: +X */}
-      <primitive object={new THREE.Line(eastGeo, new THREE.LineBasicMaterial({ color: '#ff4d4f', linewidth: 2 }))} />
+      <primitive
+        object={
+          new THREE.Line(
+            eastGeo,
+            new THREE.LineBasicMaterial({ color: '#ff4d4f', linewidth: 2 }),
+          )
+        }
+      />
       {/* Up: +Y */}
-      <primitive object={new THREE.Line(upGeo, new THREE.LineBasicMaterial({ color: '#52c41a', linewidth: 2 }))} />
+      <primitive
+        object={
+          new THREE.Line(
+            upGeo,
+            new THREE.LineBasicMaterial({ color: '#52c41a', linewidth: 2 }),
+          )
+        }
+      />
       {/* North: -Z */}
-      <primitive object={new THREE.Line(northGeo, new THREE.LineBasicMaterial({ color: '#1890ff', linewidth: 2 }))} />
+      <primitive
+        object={
+          new THREE.Line(
+            northGeo,
+            new THREE.LineBasicMaterial({ color: '#1890ff', linewidth: 2 }),
+          )
+        }
+      />
     </group>
   )
 }
@@ -51,7 +80,9 @@ const LocalAxes: React.FC<{ length?: number }> = ({ length = 5 }) => {
  * Circular disc and wireframe ring at local tangent plane (y = 0).
  * Clearly represents geometric horizon at 0.0° threshold (no terrain occlusion).
  */
-const GeometricHorizonReference: React.FC<{ radius?: number }> = ({ radius = 6 }) => {
+const GeometricHorizonReference: React.FC<{ radius?: number }> = ({
+  radius = 6,
+}) => {
   return (
     <group rotation={[-Math.PI / 2, 0, 0]} data-testid="horizon-reference">
       {/* Outer horizon ring */}
@@ -62,7 +93,12 @@ const GeometricHorizonReference: React.FC<{ radius?: number }> = ({ radius = 6 }
       {/* Semi-transparent horizontal plane (y = 0) */}
       <mesh>
         <circleGeometry args={[radius, 64]} />
-        <meshBasicMaterial color="#1f1f1f" transparent opacity={0.35} side={THREE.DoubleSide} />
+        <meshBasicMaterial
+          color="#1f1f1f"
+          transparent
+          opacity={0.35}
+          side={THREE.DoubleSide}
+        />
       </mesh>
     </group>
   )
@@ -104,12 +140,15 @@ const DirectionMarker: React.FC<{
     return new THREE.Vector3(
       sceneDirection.x * distance,
       sceneDirection.y * distance,
-      sceneDirection.z * distance
+      sceneDirection.z * distance,
     )
   }, [sceneDirection, distance])
 
   const lineGeo = useMemo(() => {
-    return new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), targetPos])
+    return new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      targetPos,
+    ])
   }, [targetPos])
 
   return (
@@ -123,14 +162,18 @@ const DirectionMarker: React.FC<{
               color,
               dashSize: 0.3,
               gapSize: 0.15,
-            })
+            }),
           )
         }
       />
       {/* Target body sphere */}
       <mesh position={targetPos}>
         <sphereGeometry args={[size, 24, 24]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.6}
+        />
       </mesh>
     </group>
   )
@@ -218,53 +261,32 @@ export const LunarScene: React.FC<LunarSceneProps> = (props) => {
 
   // Convert valid ENU vectors to local scene coordinates
   const validSunScene = useMemo(() => {
-    if (!effectiveSunEnu || !isValidDirectionVector(effectiveSunEnu)) return null
+    if (!effectiveSunEnu || !isValidDirectionVector(effectiveSunEnu))
+      return null
     return enuToLocalScene(effectiveSunEnu)
   }, [effectiveSunEnu])
 
   const validEarthScene = useMemo(() => {
-    if (!effectiveEarthEnu || !isValidDirectionVector(effectiveEarthEnu)) return null
+    if (!effectiveEarthEnu || !isValidDirectionVector(effectiveEarthEnu))
+      return null
     return enuToLocalScene(effectiveEarthEnu)
   }, [effectiveEarthEnu])
 
-  // Extract or compute azimuth/elevation numbers for HUD labels
-  const sunAngles = useMemo(() => {
-    if (observationPoint?.sun) {
-      return {
+  // Scientific labels and flags come only from the observation response.
+  const sunAngles = observationPoint
+    ? {
         azimuth: observationPoint.sun.azimuth_deg,
         elevation: observationPoint.sun.elevation_deg,
         visible: observationPoint.sun.visible,
       }
-    }
-    if (effectiveSunEnu && isValidDirectionVector(effectiveSunEnu)) {
-      const calc = enuToAzimuthElevation(effectiveSunEnu)
-      return {
-        azimuth: calc.azimuthDeg,
-        elevation: calc.elevationDeg,
-        visible: calc.elevationDeg > 0,
-      }
-    }
-    return null
-  }, [observationPoint, effectiveSunEnu])
-
-  const earthAngles = useMemo(() => {
-    if (observationPoint?.earth) {
-      return {
+    : null
+  const earthAngles = observationPoint
+    ? {
         azimuth: observationPoint.earth.azimuth_deg,
         elevation: observationPoint.earth.elevation_deg,
         visible: observationPoint.earth.visible,
       }
-    }
-    if (effectiveEarthEnu && isValidDirectionVector(effectiveEarthEnu)) {
-      const calc = enuToAzimuthElevation(effectiveEarthEnu)
-      return {
-        azimuth: calc.azimuthDeg,
-        elevation: calc.elevationDeg,
-        visible: calc.elevationDeg > 0,
-      }
-    }
-    return null
-  }, [observationPoint, effectiveEarthEnu])
+    : null
 
   return (
     <div
@@ -329,8 +351,9 @@ export const LunarScene: React.FC<LunarSceneProps> = (props) => {
         <div style={{ display: 'flex', gap: '12px' }}>
           {sunAngles ? (
             <span data-testid="hud-sun-label" style={{ color: '#ffc53d' }}>
-              <strong>Sun:</strong> Az {sunAngles.azimuth.toFixed(1)}° · El {sunAngles.elevation.toFixed(1)}° (
-              {sunAngles.visible ? 'Visible' : 'Below horizon'})
+              <strong>Sun:</strong> Az {sunAngles.azimuth.toFixed(1)}° · El{' '}
+              {sunAngles.elevation.toFixed(1)}° (
+              {sunAngles.visible ? 'Visible' : 'Not visible'})
             </span>
           ) : (
             <span style={{ color: '#777' }}>Sun: Awaiting vector</span>
@@ -338,8 +361,9 @@ export const LunarScene: React.FC<LunarSceneProps> = (props) => {
 
           {earthAngles ? (
             <span data-testid="hud-earth-label" style={{ color: '#4096ff' }}>
-              <strong>Earth:</strong> Az {earthAngles.azimuth.toFixed(1)}° · El {earthAngles.elevation.toFixed(1)}° (
-              {earthAngles.visible ? 'Visible' : 'Below horizon'})
+              <strong>Earth:</strong> Az {earthAngles.azimuth.toFixed(1)}° · El{' '}
+              {earthAngles.elevation.toFixed(1)}° (
+              {earthAngles.visible ? 'Visible' : 'Not visible'})
             </span>
           ) : (
             <span style={{ color: '#777' }}>Earth: Awaiting vector</span>
@@ -372,7 +396,13 @@ export const LunarScene: React.FC<LunarSceneProps> = (props) => {
       {/* 3D WebGL Canvas with Error Isolation */}
       <div style={{ position: 'relative', flex: 1, width: '100%' }}>
         <SceneErrorBoundary onError={onError}>
-          <Suspense fallback={<div style={{ color: '#888', padding: '1rem' }}>Initializing scene…</div>}>
+          <Suspense
+            fallback={
+              <div style={{ color: '#888', padding: '1rem' }}>
+                Initializing scene…
+              </div>
+            }
+          >
             <Canvas
               camera={{ position: [8, 7, 12], fov: 45 }}
               style={{ width: '100%', height: '100%' }}
@@ -403,7 +433,9 @@ export const LunarScene: React.FC<LunarSceneProps> = (props) => {
           justifyContent: 'space-between',
         }}
       >
-        <span>Geometric Reference Horizon (Elevation 0.0°) · Local ENU scene</span>
+        <span>
+          Geometric Reference Horizon (Elevation 0.0°) · Local ENU scene
+        </span>
         <span>Terrain occlusion not modeled in Stage 1</span>
       </div>
 

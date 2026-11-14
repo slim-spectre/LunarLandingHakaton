@@ -265,7 +265,7 @@ def test_cache_expiration_requires_execution(stage_repo, stage_clock):
 
 
 def test_map_router_registration_and_stage2_exclusion():
-    router = APIRouter(prefix="/map")
+    router = APIRouter(prefix="/api/v1/map")
 
     @router.get("/layers")
     def layers():

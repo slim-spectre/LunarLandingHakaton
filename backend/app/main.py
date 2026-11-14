@@ -13,6 +13,7 @@ from starlette.exceptions import HTTPException
 from app.core.config import get_settings
 from app.core.database import check_database
 from app.core.problems import APIProblem, ErrorEnvelope
+from app.maps import router as default_map_router
 from app.routes import router
 
 
@@ -56,7 +57,7 @@ async def reject_health_query(request: Request) -> None:
             raise RequestValidationError([{"type": "unexpected_body", "loc": ("body",)}])
 
 
-def create_app(map_router=None) -> FastAPI:
+def create_app(map_router=default_map_router) -> FastAPI:
     app = FastAPI(title="Lunar Navigator API", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
@@ -132,7 +133,7 @@ def create_app(map_router=None) -> FastAPI:
 
     app.include_router(router)
     if map_router is not None:
-        app.include_router(map_router, prefix="/api/v1")
+        app.include_router(map_router)
 
     return app
 

@@ -1,13 +1,17 @@
 # Map services integration handoff
 
-The map router is exported from `app.maps` and is intentionally not registered
-in `app.main`. Yaroslav can register it in the application factory with:
+The map router is exported from `app.maps` and is now registered by default in
+`app.main.create_app`. It already owns the full `/api/v1/map/layers` prefix.
+Custom applications can register it directly, without an additional prefix:
 
 ```python
 from app.maps import router as map_router
 
 app.include_router(map_router)
 ```
+
+See [the final Stage 1 integration report](STAGE1_COMPLETION.md) for the shared
+frontend/backend checks, browser observation and reproduction instructions.
 
 The router serves these verified catalog IDs:
 
