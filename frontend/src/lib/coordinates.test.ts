@@ -5,6 +5,7 @@ import {
   enuToLocalScene,
   localSceneToEnu,
   azimuthElevationToEnu,
+  enuToAzimuthElevation,
   isValidDirectionVector,
   normalizeVector,
 } from './coordinates'
@@ -166,6 +167,52 @@ describe('coordinates library', () => {
     it('rejects invalid elevation angles', () => {
       expect(() => azimuthElevationToEnu(0, 91)).toThrow(RangeError)
       expect(() => azimuthElevationToEnu(0, -91)).toThrow(RangeError)
+    })
+  })
+
+  describe('enuToAzimuthElevation', () => {
+    it('correctly recovers cardinal angles from ENU unit vectors', () => {
+      // North (0, 1, 0)
+      const north = enuToAzimuthElevation({ east: 0, north: 1, up: 0 })
+      expect(north.azimuthDeg).toBeCloseTo(0, 4)
+      expect(north.elevationDeg).toBeCloseTo(0, 4)
+
+      // East (1, 0, 0)
+      const east = enuToAzimuthElevation({ east: 1, north: 0, up: 0 })
+      expect(east.azimuthDeg).toBeCloseTo(90, 4)
+      expect(east.elevationDeg).toBeCloseTo(0, 4)
+
+      // South (0, -1, 0)
+      const south = enuToAzimuthElevation({ east: 0, north: -1, up: 0 })
+      expect(south.azimuthDeg).toBeCloseTo(180, 4)
+      expect(south.elevationDeg).toBeCloseTo(0, 4)
+
+      // West (-1, 0, 0)
+      const west = enuToAzimuthElevation({ east: -1, north: 0, up: 0 })
+      expect(west.azimuthDeg).toBeCloseTo(270, 4)
+      expect(west.elevationDeg).toBeCloseTo(0, 4)
+
+      // Zenith / Up (0, 0, 1)
+      const zenith = enuToAzimuthElevation({ east: 0, north: 0, up: 1 })
+      expect(zenith.elevationDeg).toBeCloseTo(90, 4)
+
+      // Nadir / Down (0, 0, -1)
+      const nadir = enuToAzimuthElevation({ east: 0, north: 0, up: -1 })
+      expect(nadir.elevationDeg).toBeCloseTo(-90, 4)
+    })
+
+    it('is reversible with azimuthElevationToEnu', () => {
+      const az = 123.45
+      const el = 17.89
+      const enu = azimuthElevationToEnu(az, el)
+      const recovered = enuToAzimuthElevation(enu)
+      expect(recovered.azimuthDeg).toBeCloseTo(az, 4)
+      expect(recovered.elevationDeg).toBeCloseTo(el, 4)
+    })
+
+    it('rejects invalid vectors in enuToAzimuthElevation', () => {
+      expect(() => enuToAzimuthElevation({ east: 0, north: 0, up: 0 })).toThrow()
+      expect(() => enuToAzimuthElevation({ east: 2, north: 0, up: 0 })).toThrow()
     })
   })
 

@@ -200,6 +200,34 @@ export function azimuthElevationToEnu(azimuthDeg: number, elevationDeg: number):
 }
 
 /**
+ * Converts topocentric ENU unit direction vector to local azimuth and elevation angles.
+ *
+ * Inversion of azimuthElevationToEnu:
+ * - azimuthDeg: [0, 360) clockwise from North (0° = North, 90° = East, 180° = South, 270° = West)
+ * - elevationDeg: [-90, 90] relative to local horizontal tangent plane
+ *
+ * @param enu - Topocentric ENU unit vector
+ * @returns Object with azimuthDeg and elevationDeg
+ */
+export function enuToAzimuthElevation(enu: EnuVector): { azimuthDeg: number; elevationDeg: number } {
+  if (!isValidDirectionVector(enu)) {
+    throw new Error(`Invalid ENU direction vector: expected unit length, received [${enu.east}, ${enu.north}, ${enu.up}]`)
+  }
+
+  const clampedUp = Math.max(-1.0, Math.min(1.0, enu.up))
+  const elevationRad = Math.asin(clampedUp)
+  const elevationDeg = (elevationRad * 180.0) / Math.PI
+
+  const azimuthRad = Math.atan2(enu.east, enu.north)
+  const azimuthDeg = ((azimuthRad * 180.0) / Math.PI + 360.0) % 360.0
+
+  return {
+    azimuthDeg: Math.round(azimuthDeg * 1e6) / 1e6,
+    elevationDeg: Math.round(elevationDeg * 1e6) / 1e6,
+  }
+}
+
+/**
  * Checks whether an ENU vector is a valid finite unit vector within tolerance.
  *
  * @param v - Vector to validate

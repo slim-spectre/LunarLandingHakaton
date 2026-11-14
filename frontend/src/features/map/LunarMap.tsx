@@ -1,28 +1,54 @@
-import React, { useRef, useCallback } from 'react'
+import React, { useRef, useCallback, useState, useMemo } from 'react'
 import { normalizeLongitude } from '../../lib/coordinates'
+import { resolveApiBaseUrl } from '../../api/client'
+import {
+  VERIFIED_MAP_LAYERS,
+  isCoordinateInLayerExtent,
+  buildLayerImageUrl,
+} from './layers'
 import type { LunarMapProps } from './types'
 
 /**
- * Minimal Reusable Lunar Map Component for Stage 0.
- *
- * Supports:
- * - Selected lunar coordinate visualization and marker
- * - Interactive coordinate selection callback
- * - Loading and unavailable states
- * - Designed for OpenLayers integration with Moon Trek / LROC WMS/WMTS layers in Stage 1
- *
- * No mock provider URLs or unauthorized tile matrix sets are hardcoded.
+ * Lunar Map Component implementing Stage 1 map foundations:
+ * - Real verified map layers (Moon Trek WMTS and LROC WMS)
+ * - Map layer switching respecting lunar CRS and parameters
+ * - Provider attribution and official source links
+ * - Verified QuickMap links from catalog data
+ * - Selected site marker and click coordinate selection
+ * - Coverage boundary checks and provider error handling
+ * - Clean fallback without misrepresenting missing imagery as terrain
  */
 export const LunarMap: React.FC<LunarMapProps> = ({
   className = '',
   selectedCoordinate,
   onSelectCoordinate,
   selectedSiteId,
+  quickmapUrl,
+  activeLayerId: controlledLayerId,
+  onLayerChange,
+  layers = VERIFIED_MAP_LAYERS,
   isLoading = false,
   isUnavailable = false,
   unavailableReason,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null)
+  const [internalLayerId, setInternalLayerId] = useState<string>(
+    layers[0]?.id ?? 'LRO_WAC_Mosaic_Global_303ppd_v02'
+  )
+  const [layerImageError, setLayerImageError] = useState<boolean>(false)
+
+  const activeLayerId = controlledLayerId ?? internalLayerId
+  const activeLayer = useMemo(() => {
+    return layers.find((l) => l.id === activeLayerId) ?? layers[0] ?? VERIFIED_MAP_LAYERS[0]
+  }, [layers, activeLayerId])
+
+  const handleLayerSelect = (newId: string) => {
+    setInternalLayerId(newId)
+    setLayerImageError(false)
+    if (onLayerChange) {
+      onLayerChange(newId)
+    }
+  }
 
   /**
    * Handle coordinate selection from click on the lunar projection viewport.
@@ -64,6 +90,18 @@ export const LunarMap: React.FC<LunarMapProps> = ({
       }
     : null
 
+  // Check if selected coordinate is outside active layer's coverage extent
+  const isOutsideCoverage = useMemo(() => {
+    if (!selectedCoordinate || !activeLayer) return false
+    return !isCoordinateInLayerExtent(selectedCoordinate, activeLayer)
+  }, [selectedCoordinate, activeLayer])
+
+  // Build proxy URL for backend layer image
+  const layerImageUrl = useMemo(() => {
+    if (!activeLayer) return null
+    return buildLayerImageUrl(activeLayer, resolveApiBaseUrl())
+  }, [activeLayer])
+
   return (
     <div
       ref={mapContainerRef}
@@ -73,41 +111,73 @@ export const LunarMap: React.FC<LunarMapProps> = ({
         position: 'relative',
         width: '100%',
         height: '100%',
-        minHeight: '280px',
+        minHeight: '340px',
         backgroundColor: '#0c0d12',
         border: '1px solid #262626',
         borderRadius: '6px',
         overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         userSelect: 'none',
       }}
     >
-      {/* Map Header / Status Bar */}
+      {/* Top Controls: Layer Switcher & Coordinate Status */}
       <div
-        className="lunar-map-status-bar"
+        className="lunar-map-controls-bar"
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          padding: '6px 12px',
-          backgroundColor: 'rgba(12, 13, 18, 0.85)',
-          borderBottom: '1px solid #1f1f1f',
+          padding: '6px 10px',
+          backgroundColor: 'rgba(18, 19, 26, 0.95)',
+          borderBottom: '1px solid #262626',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '6px',
           fontSize: '0.75rem',
-          color: '#8c8c8c',
+          color: '#a0a0a0',
           zIndex: 10,
         }}
       >
-        <span>
-          {selectedSiteId
-            ? `Site: ${selectedSiteId}`
-            : selectedCoordinate
-              ? `Coord: ${selectedCoordinate.latitude.toFixed(4)}°, ${normalizeLongitude(selectedCoordinate.longitude).toFixed(4)}°`
-              : 'Awaiting coordinate selection'}
-        </span>
-        <span style={{ fontSize: '0.7rem' }}>Click viewport to pick coordinates</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <label htmlFor="map-layer-select" style={{ fontWeight: 600, color: '#d9d9d9' }}>
+            Layer:
+          </label>
+          <select
+            id="map-layer-select"
+            data-testid="map-layer-select"
+            value={activeLayer.id}
+            onChange={(e) => handleLayerSelect(e.target.value)}
+            style={{
+              padding: '2px 6px',
+              backgroundColor: '#1f1f24',
+              border: '1px solid #333',
+              borderRadius: '4px',
+              color: '#fff',
+              fontSize: '0.75rem',
+              maxWidth: '220px',
+            }}
+          >
+            {layers.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name} ({l.provider === 'moon_trek' ? 'Moon Trek WMTS' : 'LROC WMS'})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {selectedSiteId && (
+            <span style={{ color: '#52c41a', fontWeight: 600 }}>Site: {selectedSiteId}</span>
+          )}
+          {selectedCoordinate && (
+            <span>
+              {selectedCoordinate.latitude.toFixed(4)}°, {normalizeLongitude(selectedCoordinate.longitude).toFixed(4)}°
+            </span>
+          )}
+          {!selectedCoordinate && !selectedSiteId && (
+            <span style={{ color: '#777' }}>Awaiting selection</span>
+          )}
+        </div>
       </div>
 
       {/* Interactive Lunar Map Projection Viewport */}
@@ -115,17 +185,35 @@ export const LunarMap: React.FC<LunarMapProps> = ({
         data-testid="lunar-map-viewport"
         onClick={handleViewportClick}
         style={{
-          position: 'absolute',
-          top: '32px',
-          left: 0,
-          right: 0,
-          bottom: 0,
+          position: 'relative',
+          flex: 1,
+          width: '100%',
+          minHeight: '190px',
           cursor: onSelectCoordinate && !isUnavailable && !isLoading ? 'crosshair' : 'default',
-          backgroundImage:
-            'radial-gradient(circle at center, rgba(38, 38, 38, 0.4) 0%, rgba(12, 13, 18, 0.95) 100%)',
+          backgroundColor: '#050508',
+          overflow: 'hidden',
         }}
       >
-        {/* Equirectangular Grid Lines (15-degree indicators) */}
+        {/* Layer Image Preview */}
+        {layerImageUrl && !layerImageError && !isUnavailable && (
+          <img
+            src={layerImageUrl}
+            alt={activeLayer.name}
+            data-testid="lunar-layer-image"
+            onError={() => setLayerImageError(true)}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              opacity: 0.85,
+            }}
+          />
+        )}
+
+        {/* Fallback Graphic & Equirectangular Grid Lines */}
         <svg
           width="100%"
           height="100%"
@@ -133,11 +221,11 @@ export const LunarMap: React.FC<LunarMapProps> = ({
           aria-hidden="true"
         >
           {/* Equator */}
-          <line x1="0" y1="50%" x2="100%" y2="50%" stroke="rgba(255, 255, 255, 0.15)" strokeDasharray="4 4" />
+          <line x1="0" y1="50%" x2="100%" y2="50%" stroke="rgba(255, 255, 255, 0.2)" strokeDasharray="4 4" />
           {/* Prime Meridian */}
-          <line x1="50%" y1="0" x2="50%" y2="100%" stroke="rgba(255, 255, 255, 0.15)" strokeDasharray="4 4" />
+          <line x1="50%" y1="0" x2="50%" y2="100%" stroke="rgba(255, 255, 255, 0.2)" strokeDasharray="4 4" />
           {/* South Polar Boundary line (-80 deg latitude ~ 94.4% Y) */}
-          <line x1="0" y1="94.4%" x2="100%" y2="94.4%" stroke="rgba(24, 144, 255, 0.25)" strokeDasharray="2 2" />
+          <line x1="0" y1="94.4%" x2="100%" y2="94.4%" stroke="rgba(24, 144, 255, 0.35)" strokeDasharray="2 2" />
         </svg>
 
         {/* Selected Coordinate Marker */}
@@ -154,12 +242,104 @@ export const LunarMap: React.FC<LunarMapProps> = ({
               borderRadius: '50%',
               backgroundColor: '#52c41a',
               border: '2px solid #ffffff',
-              boxShadow: '0 0 8px rgba(82, 196, 26, 0.8)',
+              boxShadow: '0 0 10px rgba(82, 196, 26, 0.9)',
               pointerEvents: 'none',
               zIndex: 5,
             }}
           />
         )}
+
+        {/* Coverage Warning Banner */}
+        {isOutsideCoverage && (
+          <div
+            data-testid="layer-outside-coverage-banner"
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              padding: '4px 8px',
+              backgroundColor: 'rgba(250, 173, 20, 0.25)',
+              border: '1px solid #faad14',
+              borderRadius: '4px',
+              color: '#faad14',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              zIndex: 6,
+            }}
+          >
+            Location outside layer coverage
+          </div>
+        )}
+
+        {/* Layer Image Error Notification */}
+        {layerImageError && !isUnavailable && (
+          <div
+            data-testid="layer-image-error-notice"
+            style={{
+              position: 'absolute',
+              bottom: '8px',
+              left: '8px',
+              padding: '4px 8px',
+              backgroundColor: 'rgba(255, 77, 79, 0.2)',
+              border: '1px solid #ff4d4f',
+              borderRadius: '4px',
+              color: '#ff7875',
+              fontSize: '0.7rem',
+              zIndex: 6,
+            }}
+          >
+            Layer imagery unavailable from provider (using schematic projection)
+          </div>
+        )}
+      </div>
+
+      {/* Layer Metadata, Projection CRS & Attribution Bar */}
+      <div
+        className="lunar-map-attribution-bar"
+        data-testid="lunar-map-attribution-bar"
+        style={{
+          padding: '6px 10px',
+          backgroundColor: '#0f1016',
+          borderTop: '1px solid #1f2029',
+          fontSize: '0.7rem',
+          color: '#858595',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '3px',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+          <div>
+            <span style={{ fontWeight: 600, color: '#bbb' }}>CRS:</span>{' '}
+            <code style={{ color: '#4096ff' }}>{activeLayer.crs_id}</code> ({activeLayer.coordinate_units})
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {activeLayer.source_url && (
+              <a
+                href={activeLayer.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#1890ff', textDecoration: 'none' }}
+              >
+                Capabilities ↗
+              </a>
+            )}
+            {quickmapUrl && (
+              <a
+                href={quickmapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="quickmap-link"
+                style={{ color: '#52c41a', textDecoration: 'none', fontWeight: 600 }}
+              >
+                View in QuickMap ↗
+              </a>
+            )}
+          </div>
+        </div>
+        <div style={{ color: '#707080', fontSize: '0.65rem' }}>
+          {activeLayer.attribution}
+        </div>
       </div>
 
       {/* Loading Overlay */}
@@ -181,7 +361,7 @@ export const LunarMap: React.FC<LunarMapProps> = ({
             zIndex: 20,
           }}
         >
-          Loading lunar map layer...
+          Loading lunar map layer…
         </div>
       )}
 
@@ -196,7 +376,7 @@ export const LunarMap: React.FC<LunarMapProps> = ({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(12, 13, 18, 0.9)',
+            backgroundColor: 'rgba(12, 13, 18, 0.92)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
