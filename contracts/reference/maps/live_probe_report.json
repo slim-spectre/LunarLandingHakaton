@@ -1,0 +1,164 @@
+{
+  "verified_at": "2026-11-13T22:23:33.036490Z",
+  "timeout_seconds": 12.0,
+  "verification": "complete",
+  "wmts": {
+    "global": {
+      "capabilities_url": "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/WMTSCapabilities.xml",
+      "verification": "complete",
+      "http_status": 200,
+      "content_type": "application/xml",
+      "layers": [
+        {
+          "id": "LRO_WAC_Mosaic_Global_303ppd_v02",
+          "title": "LRO_WAC_Mosaic_Global_303ppd_v02",
+          "tile_matrix_set": "default028mm",
+          "crs": "urn:ogc:def:crs:EPSG::104903",
+          "supported_crs": "urn:ogc:def:crs:EPSG::104903",
+          "extent": [
+            -180.0,
+            -90.0,
+            180.0,
+            90.0
+          ],
+          "coordinate_units": "degrees",
+          "formats": [
+            "image/jpeg"
+          ],
+          "tile_template": "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0//{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.jpg",
+          "matrix_count": 9,
+          "first_matrix": "0",
+          "style": "default"
+        }
+      ],
+      "tile_check": {
+        "url": "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0//default/default028mm/0/0/0.jpg",
+        "http_status": 200,
+        "content_type": "image/jpeg",
+        "bytes": 49475,
+        "matrix": "0",
+        "row": 0,
+        "col": 0
+      }
+    },
+    "south_pole": {
+      "capabilities_url": "https://trek.nasa.gov/tiles/Moon/SP/WAC_POLE_ILL_PCT_SOUTH_100M/1.0.0/WMTSCapabilities.xml",
+      "verification": "complete",
+      "http_status": 200,
+      "content_type": "application/xml",
+      "layers": [
+        {
+          "id": "WAC_POLE_ILL_PCT_SOUTH_100M",
+          "title": "WAC_POLE_ILL_PCT_SOUTH_100M",
+          "tile_matrix_set": "default028mm",
+          "crs": "urn:ogc:def:crs:EPSG::0",
+          "supported_crs": "urn:ogc:def:crs:EPSG::0",
+          "extent": [
+            -60884.204,
+            -61186.798,
+            61115.796,
+            61213.202
+          ],
+          "coordinate_units": null,
+          "formats": [
+            "image/png"
+          ],
+          "tile_template": "https://trek.nasa.gov/tiles/Moon/SP/WAC_POLE_ILL_PCT_SOUTH_100M/1.0.0//{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.png",
+          "matrix_count": 6,
+          "first_matrix": "0",
+          "style": "default"
+        }
+      ],
+      "tile_check": {
+        "url": "https://trek.nasa.gov/tiles/Moon/SP/WAC_POLE_ILL_PCT_SOUTH_100M/1.0.0//default/default028mm/0/0/0.png",
+        "http_status": 200,
+        "content_type": "image/png",
+        "bytes": 804,
+        "matrix": "0",
+        "row": 0,
+        "col": 0
+      }
+    }
+  },
+  "wms": {
+    "url": "https://wms.im-ldi.com/?SERVICE=WMS&REQUEST=GetCapabilities&VERSION=1.1.1",
+    "verification": "complete",
+    "http_status": 200,
+    "content_type": "application/vnd.ogc.wms_xml",
+    "formats": [
+      "image/png",
+      "image/tiff",
+      "image/jpeg",
+      "image/gif",
+      "image/pnm",
+      "image/vicar",
+      "application/x-cesium-terrain",
+      "image/tiff; mode=32bit"
+    ],
+    "layers": [
+      {
+        "id": "luna_wac_global",
+        "title": "LROC WAC Global 100m/px",
+        "crs": "IAU2000:30100",
+        "coordinate_units": "degrees",
+        "extent": [
+          -180.0,
+          -90.0,
+          180.0,
+          90.0
+        ]
+      },
+      {
+        "id": "luna_wac_roi_south_summer",
+        "title": "LROC WAC South Pole Summer Mosaic",
+        "crs": "IAU2000:30100",
+        "coordinate_units": "degrees",
+        "extent": [
+          -180.0,
+          -90.0,
+          180.0,
+          90.0
+        ]
+      }
+    ]
+  },
+  "failures": [],
+  "terrain_metadata": {
+    "connecting_ridge_5m": {
+      "url": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site01/Site01_final_adj_5mpp_surf.tif",
+      "head_status": 200,
+      "content_length_bytes": 40980810,
+      "range_status": 206,
+      "content_range": "bytes 0-65535/40980810",
+      "range_bytes_read": 65536,
+      "verification": "complete"
+    },
+    "faustini_rim_a_5m": {
+      "url": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/LM7/LM7_final_adj_5mpp_surf.tif",
+      "head_status": 200,
+      "content_length_bytes": 64033675,
+      "range_status": 206,
+      "content_range": "bytes 0-65535/64033675",
+      "range_bytes_read": 65536,
+      "verification": "complete"
+    },
+    "peak_near_shackleton_5m": {
+      "url": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site07/Site07_final_adj_5mpp_surf.tif",
+      "head_status": 200,
+      "content_length_bytes": 40980808,
+      "range_status": 206,
+      "content_range": "bytes 0-65535/40980808",
+      "range_bytes_read": 65536,
+      "verification": "complete"
+    },
+    "south_pole_20m": {
+      "url": "https://pgda.gsfc.nasa.gov/data/LOLA_20mpp/LDEM_80S_20MPP_ADJ.TIF",
+      "head_status": 200,
+      "content_length_bytes": 2696082051,
+      "range_status": 206,
+      "content_range": "bytes 0-8191/2696082051",
+      "range_bytes_read": 8192,
+      "verification": "complete"
+    }
+  }
+}

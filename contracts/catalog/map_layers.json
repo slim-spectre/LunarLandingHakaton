@@ -1,0 +1,43 @@
+{
+  "items": [
+    {
+      "id": "LRO_WAC_Mosaic_Global_303ppd_v02",
+      "name": "LRO WAC Global Mosaic v2",
+      "provider": "moon_trek",
+      "service_type": "wmts",
+      "crs_id": "urn:ogc:def:crs:EPSG::104903",
+      "coordinate_units": "degrees",
+      "extent": [-180, -90, 180, 90],
+      "attribution": "NASA/GSFC/ASU LROC Team; tiles served by NASA/JPL Moon Trek.",
+      "source_url": "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/WMTSCapabilities.xml",
+      "tile_matrix_set": "default028mm",
+      "access_url_template": "/api/v1/map/layers/LRO_WAC_Mosaic_Global_303ppd_v02/tiles/{matrix}/{row}/{col}"
+    },
+    {
+      "id": "luna_wac_roi_south_summer",
+      "name": "LROC WAC South Pole Summer Mosaic",
+      "provider": "lroc",
+      "service_type": "wms",
+      "crs_id": "IAU2000:30100",
+      "coordinate_units": "degrees",
+      "extent": [-180, -90, 180, 90],
+      "attribution": "NASA/GSFC/ASU LROC Team; cite Speyerer and Robinson (2013).",
+      "source_url": "https://wms.im-ldi.com/?SERVICE=WMS&REQUEST=GetCapabilities&VERSION=1.1.1",
+      "tile_matrix_set": null,
+      "access_url_template": "/api/v1/map/layers/luna_wac_roi_south_summer/image?bbox={min_x},{min_y},{max_x},{max_y}&width={width}&height={height}"
+    },
+    {
+      "id": "luna_wac_global",
+      "name": "LROC WAC Global 100m/px",
+      "provider": "lroc",
+      "service_type": "wms",
+      "crs_id": "IAU2000:30100",
+      "coordinate_units": "degrees",
+      "extent": [-180, -90, 180, 90],
+      "attribution": "NASA/GSFC/ASU LROC Team.",
+      "source_url": "https://wms.im-ldi.com/?SERVICE=WMS&REQUEST=GetCapabilities&VERSION=1.1.1",
+      "tile_matrix_set": null,
+      "access_url_template": "/api/v1/map/layers/luna_wac_global/image?bbox={min_x},{min_y},{max_x},{max_y}&width={width}&height={height}"
+    }
+  ]
+}
