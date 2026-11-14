@@ -12,7 +12,9 @@ __pycache__/
 .mypy_cache/
 .pyright/
 .coverage
+coverage.xml
 htmlcov/
+.cache/
 node_modules/
 dist/
 build/
@@ -21,4 +23,15 @@ datasets/
 data/downloads/
 generated/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.idea/
+.vscode/
 .DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+*.sw?
+*~
